@@ -1,31 +1,89 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { RefreshCw } from 'lucide-react';
 
 export default function Alerts() {
   const navigate = useNavigate();
   const [alerts, setAlerts] = useState([]);
+  const [stats, setStats] = useState({});
+  const [feedbackMsg, setFeedbackMsg] = useState(null);
 
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
         const res = await fetch('http://localhost:8000/alerts');
         if (res.ok) setAlerts(await res.json());
+        const statsRes = await fetch('http://localhost:8000/stats');
+        if (statsRes.ok) setStats(await statsRes.json());
       } catch (e) {
         console.error("API not running");
       }
     };
     
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 1000); // Live poll
+    const interval = setInterval(fetchAlerts, 1000);
     return () => clearInterval(interval);
   }, []);
 
+  const sendFeedback = async (alertId, verdict) => {
+    try {
+      const res = await fetch('http://localhost:8000/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alert_id: alertId, verdict })
+      });
+      const data = await res.json();
+      setFeedbackMsg(`${data.message} (${data.total_feedback_samples} total samples)`);
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } catch (e) {
+      setFeedbackMsg("Error sending feedback");
+    }
+  };
+
+  const triggerRetrain = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/retrain', { method: 'POST' });
+      const data = await res.json();
+      setFeedbackMsg(data.message);
+      setTimeout(() => setFeedbackMsg(null), 5000);
+    } catch (e) {
+      setFeedbackMsg("Error triggering retrain");
+    }
+  };
+
   return (
     <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1>Network Alerts (Live stream)</h1>
-        <button className="btn btn-primary">Export CSV</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h1>Network Alerts (Live Stream)</h1>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {stats.feedbackCount > 0 && (
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+              {stats.feedbackCount} feedback samples
+            </span>
+          )}
+          <button 
+            className="btn btn-primary" 
+            onClick={triggerRetrain}
+            disabled={stats.isRetraining}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <RefreshCw size={14} className={stats.isRetraining ? 'spin' : ''} />
+            {stats.isRetraining ? 'Retraining...' : 'Retrain Model'}
+          </button>
+        </div>
       </div>
+
+      {feedbackMsg && (
+        <div className="card" style={{ marginBottom: '16px', padding: '12px 16px', borderLeft: '3px solid var(--accent-cyan)', fontSize: '14px' }}>
+          {feedbackMsg}
+        </div>
+      )}
+
+      {stats.modelVersion && (
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          Model: {stats.modelVersion} | Accuracy: {stats.globalAccuracy}%
+        </div>
+      )}
       
       <div className="card table-container">
         <table>
@@ -35,9 +93,9 @@ export default function Alerts() {
               <th>Type</th>
               <th>Confidence</th>
               <th>Source IP</th>
-              <th>Reporting Node</th>
-              <th>Status</th>
-              <th>Action</th>
+              <th>Node</th>
+              <th>Verdict</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -58,18 +116,44 @@ export default function Alerts() {
                 <td style={{ fontFamily: 'monospace' }}>{alert.sourceIp}</td>
                 <td>{alert.node}</td>
                 <td>
-                  <span className={`badge ${alert.status}`}>
-                    {alert.status}
-                  </span>
+                  {alert.analyst_verdict === 'confirmed' && (
+                    <span className="badge critical">Confirmed</span>
+                  )}
+                  {alert.analyst_verdict === 'false_positive' && (
+                    <span className="badge" style={{ background: 'rgba(0, 200, 100, 0.15)', color: '#00c864' }}>FP</span>
+                  )}
+                  {!alert.analyst_verdict && (
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Pending</span>
+                  )}
                 </td>
                 <td>
-                  <button 
-                    className="btn" 
-                    style={{ padding: '4px 8px', fontSize: '12px' }}
-                    onClick={() => navigate(`/explain?alertId=${alert.id}`)}
-                  >
-                    Explain
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button 
+                      className="btn" 
+                      style={{ padding: '4px 8px', fontSize: '11px' }}
+                      onClick={() => navigate(`/explain?alertId=${alert.id}`)}
+                    >
+                      Explain
+                    </button>
+                    {!alert.analyst_verdict && (
+                      <>
+                        <button 
+                          className="btn" 
+                          style={{ padding: '4px 8px', fontSize: '11px', borderColor: 'var(--status-critical)', color: 'var(--status-critical)' }}
+                          onClick={() => sendFeedback(alert.id, 'confirm_attack')}
+                        >
+                          Confirm
+                        </button>
+                        <button 
+                          className="btn" 
+                          style={{ padding: '4px 8px', fontSize: '11px', borderColor: '#00c864', color: '#00c864' }}
+                          onClick={() => sendFeedback(alert.id, 'false_positive')}
+                        >
+                          FP
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -79,3 +163,4 @@ export default function Alerts() {
     </div>
   );
 }
+
