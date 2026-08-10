@@ -1,0 +1,29 @@
+"""XFed-IDS Configuration"""
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent
+DATA_DIR = BASE_DIR / 'data'
+RAW_DIR = DATA_DIR / 'raw'
+PROCESSED_DIR = DATA_DIR / 'processed'
+RESULTS_DIR = BASE_DIR / 'results'
+MODEL_DIR = BASE_DIR / 'models'
+LOG_DIR = BASE_DIR / 'logs'
+
+for d in [RAW_DIR, PROCESSED_DIR, RESULTS_DIR, MODEL_DIR, LOG_DIR]:
+    d.mkdir(parents=True, exist_ok=True)
+
+INPUT_DIM = 78
+NUM_CLASSES = 2
+HIDDEN_DIM_1 = 128
+HIDDEN_DIM_2 = 64
+DROPOUT_RATE = 0.3
+BATCH_SIZE = 256
+LEARNING_RATE = 0.001
+NUM_EPOCHS = 20
+RANDOM_SEED = 42
+NUM_CLIENTS = 3
+NUM_ROUNDS = 10
+LOCAL_EPOCHS = 1
+NON_IID_ALPHA = 0.5
+FEDPROX_MU = 0.01
+BINARY_CLASSIFICATION = True

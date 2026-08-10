@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+node_modules/
+.venv/
+env/
+venv/
+data/raw/
+data/processed/
+logs/
+.DS_Store
