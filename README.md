@@ -42,6 +42,8 @@ Rather than just running static scripts, the project features a live production-
 - **FastAPI Server:** Hosts the trained global model in memory.
 - **Traffic Simulator:** A script that continuously pumps random packets from the CICIDS test dataset into the API at a rate of 1 packet per second, simulating real-world network traffic.
 - **Inference Pipeline:** The API receives a packet, runs it through the PyTorch model, and if an attack is detected, instantly triggers the SHAP KernelExplainer to calculate feature importance on the fly.
+- **Continuous Learning (The Analyst Loop):** When SOC analysts confirm an attack or flag a false positive in the dashboard, the API captures the raw network packet features. 
+- **Hot-Swap Retraining:** A background process can be triggered to inject these newly labeled analyst samples into the training pool, run a fresh federated training round, and hot-swap the new, smarter global model into memory without ever taking the server offline.
 
 ### 3. The Premium Frontend Dashboard (React.js)
 A modern, dark-themed React web application that serves as the SOC interface:
