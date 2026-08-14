@@ -47,39 +47,32 @@ CONFIRMED_BENIGN = FEEDBACK_DIR / "confirmed_benign.csv"
 
 
 # ---------------------------------------------------------------------------
-# Differential Privacy noise injection
-# ---------------------------------------------------------------------------
-def add_dp_noise(state_dict, clip_norm, epsilon, delta, num_clients):
-    """Apply (epsilon, delta)-Differential Privacy via Gaussian mechanism."""
-    sigma = clip_norm * math.sqrt(2.0 * math.log(1.25 / delta)) / epsilon
-    noisy_dict = {}
-    for key, tensor in state_dict.items():
-        norm = torch.norm(tensor.float())
-        clip_factor = min(1.0, clip_norm / (norm.item() + 1e-8))
-        clipped = tensor.float() * clip_factor
-        noise = torch.normal(mean=0.0, std=sigma / num_clients, size=clipped.shape)
-        noisy_dict[key] = clipped + noise
-    return noisy_dict
-
-
-# ---------------------------------------------------------------------------
-# FedAvg aggregation with optional DP
+# FedAvg aggregation with optional DP (clips updates, not absolute weights)
 # ---------------------------------------------------------------------------
 def fedavg_aggregate(global_model, client_models, client_sizes, use_dp=DP_ENABLED):
     """Weighted average of client model parameters with optional DP noise."""
-    global_dict = global_model.state_dict()
+    old_dict = {k: v.clone().float() for k, v in global_model.state_dict().items()}
+    new_dict = global_model.state_dict()
     total_size = sum(client_sizes)
-    for key in global_dict.keys():
-        global_dict[key] = torch.zeros_like(global_dict[key], dtype=torch.float32)
+
+    for key in new_dict.keys():
+        new_dict[key] = torch.zeros_like(new_dict[key], dtype=torch.float32)
         for i, client_model in enumerate(client_models):
             weight = client_sizes[i] / total_size
-            global_dict[key] += weight * client_model.state_dict()[key].float()
+            new_dict[key] += weight * client_model.state_dict()[key].float()
 
     if use_dp:
-        global_dict = add_dp_noise(global_dict, DP_CLIP_NORM, DP_EPSILON, DP_DELTA, len(client_models))
-        print('    [DP] Gaussian noise applied (eps={}, delta={})'.format(DP_EPSILON, DP_DELTA))
+        sigma = DP_CLIP_NORM * math.sqrt(2.0 * math.log(1.25 / DP_DELTA)) / DP_EPSILON
+        for key in new_dict.keys():
+            delta = new_dict[key] - old_dict[key]
+            delta_norm = torch.norm(delta)
+            clip_factor = min(1.0, DP_CLIP_NORM / (delta_norm.item() + 1e-8))
+            delta = delta * clip_factor
+            noise = torch.normal(mean=0.0, std=sigma / len(client_models), size=delta.shape)
+            new_dict[key] = old_dict[key] + delta + noise
+        print('    [DP] Noise on updates (eps={}, clip={})'.format(DP_EPSILON, DP_CLIP_NORM))
 
-    global_model.load_state_dict(global_dict)
+    global_model.load_state_dict(new_dict)
     return global_model
 
 

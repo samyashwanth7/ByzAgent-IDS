@@ -5,7 +5,7 @@
   "num_rounds": 10,
   "num_clients": 3,
   "non_iid_alpha": "N/A",
-  "training_time_seconds": 1053.9142742156982,
+  "training_time_seconds": 1433.5765535831451,
   "final_accuracy": 0.8493214787084699,
   "final_f1": 0.7801206902104619,
   "final_precision": 0.7213469741955417,

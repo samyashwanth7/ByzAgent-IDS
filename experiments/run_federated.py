@@ -18,39 +18,32 @@ from src.model import IDSModel, count_parameters
 from src.dataset import (load_cicids2017, partition_data_iid, partition_data_non_iid, create_dataloaders)
 from src.utils import (set_seed, get_device, train_one_epoch, evaluate, print_metrics, save_results, save_model)
 
-def add_dp_noise(state_dict, clip_norm, epsilon, delta, num_clients):
-    """Apply (epsilon, delta)-Differential Privacy via Gaussian mechanism.
-    1. Clip each weight tensor to bound sensitivity.
-    2. Add calibrated Gaussian noise.
-    """
-    sigma = clip_norm * math.sqrt(2.0 * math.log(1.25 / delta)) / epsilon
-    noisy_dict = {}
-    for key, tensor in state_dict.items():
-        # Clip
-        norm = torch.norm(tensor.float())
-        clip_factor = min(1.0, clip_norm / (norm.item() + 1e-8))
-        clipped = tensor.float() * clip_factor
-        # Add noise
-        noise = torch.normal(mean=0.0, std=sigma / num_clients, size=clipped.shape)
-        noisy_dict[key] = clipped + noise
-    return noisy_dict
-
-
 def fedavg_aggregate(global_model, client_models, client_sizes, use_dp=DP_ENABLED):
-    global_dict = global_model.state_dict()
+    old_dict = {k: v.clone().float() for k, v in global_model.state_dict().items()}
+    new_dict = global_model.state_dict()
     total_size = sum(client_sizes)
-    for key in global_dict.keys():
-        global_dict[key] = torch.zeros_like(global_dict[key], dtype=torch.float32)
+
+    for key in new_dict.keys():
+        new_dict[key] = torch.zeros_like(new_dict[key], dtype=torch.float32)
         for i, client_model in enumerate(client_models):
             weight = client_sizes[i] / total_size
-            global_dict[key] += weight * client_model.state_dict()[key].float()
+            new_dict[key] += weight * client_model.state_dict()[key].float()
 
-    # Apply Differential Privacy noise after aggregation
+    # Apply Differential Privacy: clip and noise the UPDATE (delta), not absolute weights
     if use_dp:
-        global_dict = add_dp_noise(global_dict, DP_CLIP_NORM, DP_EPSILON, DP_DELTA, len(client_models))
-        print('    [DP] Gaussian noise applied (eps={}, delta={}, clip={})'.format(DP_EPSILON, DP_DELTA, DP_CLIP_NORM))
+        sigma = DP_CLIP_NORM * math.sqrt(2.0 * math.log(1.25 / DP_DELTA)) / DP_EPSILON
+        for key in new_dict.keys():
+            delta = new_dict[key] - old_dict[key]
+            # Clip the update
+            delta_norm = torch.norm(delta)
+            clip_factor = min(1.0, DP_CLIP_NORM / (delta_norm.item() + 1e-8))
+            delta = delta * clip_factor
+            # Add calibrated Gaussian noise
+            noise = torch.normal(mean=0.0, std=sigma / len(client_models), size=delta.shape)
+            new_dict[key] = old_dict[key] + delta + noise
+        print('    [DP] Noise on updates (eps={}, clip={})'.format(DP_EPSILON, DP_CLIP_NORM))
 
-    global_model.load_state_dict(global_dict)
+    global_model.load_state_dict(new_dict)
     return global_model
 
 def train_local_fedprox(model, global_model, dataloader, optimizer, criterion, device, mu=0.01):
