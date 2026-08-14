@@ -1,10 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { Shield, Activity, BarChart2, GitMerge } from 'lucide-react';
+import { Shield, Activity, BarChart2, GitMerge, PieChart } from 'lucide-react';
 import Home from './pages/Home';
 import Alerts from './pages/Alerts';
 import Explain from './pages/Explain';
 import Compare from './pages/Compare';
+import Analytics from './pages/Analytics';
 
 function App() {
   return (
@@ -30,6 +31,10 @@ function App() {
               <BarChart2 size={20} />
               Explainability
             </NavLink>
+            <NavLink to="/analytics" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <PieChart size={20} />
+              Analytics
+            </NavLink>
             <NavLink to="/compare" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
               <GitMerge size={20} />
               Federated Compare
@@ -43,6 +48,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/explain" element={<Explain />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/compare" element={<Compare />} />
           </Routes>
         </main>

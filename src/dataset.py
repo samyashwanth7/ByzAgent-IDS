@@ -10,7 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
-from config import RAW_DIR, PROCESSED_DIR, BATCH_SIZE, RANDOM_SEED
+from config import RAW_DIR, PROCESSED_DIR, BATCH_SIZE, RANDOM_SEED, BINARY_CLASSIFICATION, ATTACK_CLASSES
 
 
 class IDSDataset(Dataset):
@@ -23,10 +23,53 @@ class IDSDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 
+def _map_label_to_class(label_str):
+    """Map a CICIDS-2017 label string to one of our 8 consolidated classes."""
+    label = str(label_str).strip()
+    label_upper = label.upper()
+
+    if label_upper == 'BENIGN':
+        return 0  # BENIGN
+
+    # DDoS / DoS variants
+    ddos_keywords = ['DDOS', 'DOS HULK', 'DOS GOLDENEYE', 'DOS SLOWLORIS', 'DOS SLOWHTTPTEST']
+    for kw in ddos_keywords:
+        if kw in label_upper:
+            return 1  # DDoS
+
+    if 'PORTSCAN' in label_upper:
+        return 2  # PortScan
+
+    # Brute Force (FTP-Patator, SSH-Patator)
+    if 'PATATOR' in label_upper:
+        return 3  # Brute Force
+
+    # Web Attacks
+    if 'WEB ATTACK' in label_upper:
+        return 4  # Web Attack
+
+    if 'INFILTRATION' in label_upper:
+        return 5  # Infiltration
+
+    if 'BOT' in label_upper:
+        return 6  # Bot
+
+    if 'HEARTBLEED' in label_upper:
+        return 7  # Heartbleed
+
+    # Fallback: treat unknown as class 1 (generic attack)
+    return 1
+
+
 def load_cicids2017(data_dir=None, force_reload=False):
     if data_dir is None:
         data_dir = RAW_DIR
-    processed_file = PROCESSED_DIR / 'cicids2017_processed.pkl'
+
+    # Use different cache files for binary vs multi-class
+    if BINARY_CLASSIFICATION:
+        processed_file = PROCESSED_DIR / 'cicids2017_processed.pkl'
+    else:
+        processed_file = PROCESSED_DIR / 'cicids2017_multiclass.pkl'
 
     if processed_file.exists() and not force_reload:
         print('Loading preprocessed data from {}...'.format(processed_file))
@@ -34,7 +77,7 @@ def load_cicids2017(data_dir=None, force_reload=False):
             data = pickle.load(f)
         print('  Loaded: {} train, {} test samples'.format(len(data['X_train']), len(data['X_test'])))
         print('  Features: {}'.format(data['X_train'].shape[1]))
-        print('  Classes: {}'.format(len(data['label_names'])))
+        print('  Classes: {} -- {}'.format(len(data['label_names']), data['label_names']))
         return (data['X_train'], data['X_test'], data['y_train'], data['y_test'],
                 data['feature_names'], data['label_names'])
 
@@ -42,13 +85,16 @@ def load_cicids2017(data_dir=None, force_reload=False):
     print('  Loading CICIDS 2017 Dataset')
     print('=' * 60)
 
-    # Find CSV files - check raw/ first, then raw/archive/
-    csv_files = sorted([f for f in Path(data_dir).glob('*.csv') if '_plus' not in f.stem])
+    # Find CSV files - use archive/ if it exists and has CSVs, else use raw/
+    # IMPORTANT: Do NOT combine both -- they may have different column schemas
     archive_dir = Path(data_dir) / 'archive'
     if archive_dir.exists():
-        archive_csvs = sorted(archive_dir.glob('*.csv'))
-        if archive_csvs:
-            csv_files.extend(archive_csvs)
+        csv_files = sorted(archive_dir.glob('*.csv'))
+    else:
+        csv_files = []
+
+    if not csv_files:
+        csv_files = sorted([f for f in Path(data_dir).glob('*.csv') if '_plus' not in f.stem])
 
     if not csv_files:
         raise FileNotFoundError('No CSV files found in {} or {}'.format(data_dir, archive_dir))
@@ -108,18 +154,26 @@ def load_cicids2017(data_dir=None, force_reload=False):
     print('Dropped {:,} duplicate rows'.format(n_before - len(features)))
     print('Final features: {}'.format(features.shape[1]))
 
-    print('Encoding labels (Binary: BENIGN vs ATTACK)...')
-    binary_labels = labels.apply(lambda x: 0 if str(x).strip().upper() == 'BENIGN' else 1)
-    label_names = ['BENIGN', 'ATTACK']
-    benign_count = (binary_labels == 0).sum()
-    attack_count = (binary_labels == 1).sum()
-    total = len(binary_labels)
-    print('  BENIGN: {:,} ({:.1f}%)'.format(benign_count, benign_count/total*100))
-    print('  ATTACK: {:,} ({:.1f}%)'.format(attack_count, attack_count/total*100))
+    # Encode labels
+    if BINARY_CLASSIFICATION:
+        print('Encoding labels (Binary: BENIGN vs ATTACK)...')
+        encoded_labels = labels.apply(lambda x: 0 if str(x).strip().upper() == 'BENIGN' else 1)
+        label_names = ['BENIGN', 'ATTACK']
+    else:
+        print('Encoding labels (Multi-Class: {} categories)...'.format(len(ATTACK_CLASSES)))
+        encoded_labels = labels.apply(_map_label_to_class)
+        label_names = list(ATTACK_CLASSES)
+
+    # Print class distribution
+    print('\n  Class distribution:')
+    for i, name in enumerate(label_names):
+        count = (encoded_labels == i).sum()
+        pct = count / len(encoded_labels) * 100 if len(encoded_labels) > 0 else 0
+        print('    [{}] {}: {:,} ({:.2f}%)'.format(i, name, count, pct))
 
     feature_names = list(features.columns)
     X = features.values.astype(np.float32)
-    y = binary_labels.values.astype(np.int64)
+    y = encoded_labels.values.astype(np.int64)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=RANDOM_SEED, stratify=y

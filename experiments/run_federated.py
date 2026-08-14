@@ -11,12 +11,32 @@ import time
 import copy
 from config import (NUM_ROUNDS, NUM_CLIENTS, BATCH_SIZE, LEARNING_RATE,
                     LOCAL_EPOCHS, NON_IID_ALPHA, RESULTS_DIR, MODEL_DIR,
-                    RANDOM_SEED, FEDPROX_MU)
+                    RANDOM_SEED, FEDPROX_MU, DP_ENABLED, DP_EPSILON,
+                    DP_DELTA, DP_CLIP_NORM)
+import math
 from src.model import IDSModel, count_parameters
 from src.dataset import (load_cicids2017, partition_data_iid, partition_data_non_iid, create_dataloaders)
 from src.utils import (set_seed, get_device, train_one_epoch, evaluate, print_metrics, save_results, save_model)
 
-def fedavg_aggregate(global_model, client_models, client_sizes):
+def add_dp_noise(state_dict, clip_norm, epsilon, delta, num_clients):
+    """Apply (epsilon, delta)-Differential Privacy via Gaussian mechanism.
+    1. Clip each weight tensor to bound sensitivity.
+    2. Add calibrated Gaussian noise.
+    """
+    sigma = clip_norm * math.sqrt(2.0 * math.log(1.25 / delta)) / epsilon
+    noisy_dict = {}
+    for key, tensor in state_dict.items():
+        # Clip
+        norm = torch.norm(tensor.float())
+        clip_factor = min(1.0, clip_norm / (norm.item() + 1e-8))
+        clipped = tensor.float() * clip_factor
+        # Add noise
+        noise = torch.normal(mean=0.0, std=sigma / num_clients, size=clipped.shape)
+        noisy_dict[key] = clipped + noise
+    return noisy_dict
+
+
+def fedavg_aggregate(global_model, client_models, client_sizes, use_dp=DP_ENABLED):
     global_dict = global_model.state_dict()
     total_size = sum(client_sizes)
     for key in global_dict.keys():
@@ -24,6 +44,12 @@ def fedavg_aggregate(global_model, client_models, client_sizes):
         for i, client_model in enumerate(client_models):
             weight = client_sizes[i] / total_size
             global_dict[key] += weight * client_model.state_dict()[key].float()
+
+    # Apply Differential Privacy noise after aggregation
+    if use_dp:
+        global_dict = add_dp_noise(global_dict, DP_CLIP_NORM, DP_EPSILON, DP_DELTA, len(client_models))
+        print('    [DP] Gaussian noise applied (eps={}, delta={}, clip={})'.format(DP_EPSILON, DP_DELTA, DP_CLIP_NORM))
+
     global_model.load_state_dict(global_dict)
     return global_model
 

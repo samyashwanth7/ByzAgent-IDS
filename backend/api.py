@@ -16,9 +16,10 @@ from fastapi.middleware.cors import CORSMiddleware
 # Ensure imports work from the root directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from config import MODEL_DIR, BASE_DIR
+from config import MODEL_DIR, BASE_DIR, ATTACK_CLASSES, DP_ENABLED, DP_EPSILON
 from src.model import IDSModel
 from src.dataset import load_cicids2017
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
 
 app = FastAPI(title="XFed-IDS Backend API")
 
@@ -33,11 +34,16 @@ app.add_middleware(
 # Globals
 model = None
 feature_names = []
+label_names = []
 explainer = None
 alerts_db = []
 alert_id_counter = 1050
 model_version = "v1.0"
 is_retraining = False
+
+# Cached test data for analytics
+_X_test = None
+_y_test = None
 
 # Feedback storage path
 FEEDBACK_DIR = BASE_DIR / 'data' / 'feedback'
@@ -45,23 +51,28 @@ FEEDBACK_DIR.mkdir(parents=True, exist_ok=True)
 CONFIRMED_ATTACKS_FILE = FEEDBACK_DIR / 'confirmed_attacks.csv'
 CONFIRMED_BENIGN_FILE = FEEDBACK_DIR / 'confirmed_benign.csv'
 
-def _extract_attack_class(shap_values):
+def _extract_shap_for_class(shap_values, class_idx):
+    """Extract SHAP values for a specific predicted class."""
     if isinstance(shap_values, list):
-        return shap_values[1]
+        return shap_values[class_idx]
     sv = np.array(shap_values)
     if sv.ndim == 3:
-        return sv[:, :, 1]
+        return sv[:, :, class_idx]
     return sv
 
 def _load_model_and_explainer():
     """Load the global model and reinitialize the SHAP explainer."""
-    global model, feature_names, explainer
+    global model, feature_names, label_names, explainer, _X_test, _y_test
     print("Loading dataset metadata...")
-    X_train, X_test, y_train, y_test, f_names, label_names = load_cicids2017()
+    X_train, X_test, y_train, y_test, f_names, l_names = load_cicids2017()
     feature_names = f_names
+    label_names = l_names
+    _X_test = X_test
+    _y_test = y_test
     
-    print("Loading global federated model...")
-    model = IDSModel(input_dim=len(feature_names), num_classes=2)
+    num_classes = len(label_names)
+    print("Loading global federated model ({} classes)...".format(num_classes))
+    model = IDSModel(input_dim=len(feature_names), num_classes=num_classes)
     model.load_state_dict(torch.load(MODEL_DIR / 'federated_iid_fedavg.pt', map_location='cpu', weights_only=True))
     model.eval()
     
@@ -102,37 +113,38 @@ def predict(req: PredictRequest):
     confidence = float(probs[pred_class] * 100)
     
     result = {
-        "prediction": "ATTACK" if pred_class == 1 else "BENIGN",
+        "prediction": label_names[pred_class] if pred_class < len(label_names) else "UNKNOWN",
         "confidence": round(confidence, 2),
         "source_ip": req.source_ip,
         "node": req.node,
         "is_alert": False
     }
     
-    # 2. If attack, generate SHAP explanation and save alert
-    if pred_class == 1:
+    # 2. If NOT benign (class 0), generate SHAP explanation and save alert
+    if pred_class != 0:
         sv = explainer.shap_values(X)
-        sv_attack = _extract_attack_class(sv)[0] # get the 1D array for this sample
+        sv_class = _extract_shap_for_class(sv, pred_class)[0]
         
         # Sort by absolute SHAP value
-        top_idx = np.argsort(np.abs(sv_attack))[-5:][::-1]
-        shap_data = [{"feature": feature_names[i], "value": float(sv_attack[i])} for i in top_idx]
+        top_idx = np.argsort(np.abs(sv_class))[-5:][::-1]
+        shap_data = [{"feature": feature_names[i], "value": float(sv_class[i])} for i in top_idx]
         
+        attack_name = label_names[pred_class] if pred_class < len(label_names) else "Unknown Attack"
         alert = {
             "id": f"AL-{alert_id_counter}",
-            "type": "Network Intrusion",
+            "type": attack_name,
             "confidence": round(confidence, 2),
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "sourceIp": req.source_ip,
             "status": "critical" if confidence > 90 else "warning",
             "node": req.node,
             "shap": shap_data,
-            "features": req.features,  # Store raw features for feedback loop
-            "analyst_verdict": None     # Will be set by /feedback
+            "features": req.features,
+            "analyst_verdict": None
         }
-        alerts_db.insert(0, alert) # Put newest first
+        alerts_db.insert(0, alert)
         if len(alerts_db) > 100:
-            alerts_db.pop() # Keep last 100
+            alerts_db.pop()
             
         alert_id_counter += 1
         result["is_alert"] = True
@@ -157,7 +169,59 @@ def get_stats():
         "lastUpdate": datetime.now().strftime("%H:%M:%S"),
         "modelVersion": model_version,
         "isRetraining": is_retraining,
-        "feedbackCount": _count_feedback()
+        "feedbackCount": _count_feedback(),
+        "dpEnabled": DP_ENABLED,
+        "dpEpsilon": DP_EPSILON,
+        "numClasses": len(label_names)
+    }
+
+# ========== Model Analytics ==========
+
+@app.get("/analytics")
+def get_analytics():
+    """Return confusion matrix and per-class metrics from test set."""
+    if _X_test is None or _y_test is None:
+        return {"error": "Model not loaded yet"}
+    
+    with torch.no_grad():
+        out = model(torch.FloatTensor(_X_test))
+        preds = torch.argmax(out, dim=1).numpy()
+    
+    # Confusion matrix
+    cm = confusion_matrix(_y_test, preds, labels=list(range(len(label_names))))
+    
+    # Per-class metrics
+    per_class = []
+    for i, name in enumerate(label_names):
+        mask_true = (_y_test == i)
+        mask_pred = (preds == i)
+        tp = int(np.sum(mask_true & mask_pred))
+        support = int(np.sum(mask_true))
+        
+        if support > 0:
+            prec = float(precision_score(_y_test == i, preds == i, zero_division=0))
+            rec = float(recall_score(_y_test == i, preds == i, zero_division=0))
+            f1 = float(f1_score(_y_test == i, preds == i, zero_division=0))
+        else:
+            prec = rec = f1 = 0.0
+        
+        per_class.append({
+            "name": name,
+            "precision": round(prec, 4),
+            "recall": round(rec, 4),
+            "f1": round(f1, 4),
+            "support": support
+        })
+    
+    overall_acc = float(np.mean(preds == _y_test))
+    
+    return {
+        "confusion_matrix": cm.tolist(),
+        "class_names": label_names,
+        "per_class_metrics": per_class,
+        "overall_accuracy": round(overall_acc, 4),
+        "dp_enabled": DP_ENABLED,
+        "dp_epsilon": DP_EPSILON
     }
 
 # ========== Analyst Feedback Loop ==========
