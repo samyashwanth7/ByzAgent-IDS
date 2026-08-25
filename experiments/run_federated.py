@@ -16,6 +16,7 @@ from config import (NUM_ROUNDS, NUM_CLIENTS, BATCH_SIZE, LEARNING_RATE,
                     DP_DELTA, DP_CLIP_NORM)
 import math
 from src.monitoring.client_stats import ByzAgentMonitor
+from src.aggregation.robust_baselines import krum_aggregate, trimmed_mean_aggregate
 from src.model import IDSModel, count_parameters
 from src.dataset import (load_cicids2017, partition_data_iid, partition_data_non_iid, create_dataloaders)
 from src.utils import (set_seed, get_device, train_one_epoch, evaluate, print_metrics, save_results, save_model)
@@ -156,7 +157,14 @@ def run_federated_experiment(non_iid=False, strategy_name='fedavg', alpha=NON_II
         for cid, stats in round_stats.items():
             print(f"    {cid}: norm={stats['update_norm']:.4f}, cos_peer={stats['cos_sim_peer_mean']:.4f}, loss={stats['local_loss']:.4f}, val_acc={stats['val_accuracy']:.4f}")
             
-        global_model = fedavg_aggregate(global_model, client_models, client_sizes)
+        if config.AGG_STRATEGY == 'krum':
+            global_model, best_idx = krum_aggregate(global_model, client_models, f=len(config.ATTACKER_CLIENTS) if config.POISON_ENABLED else 1)
+            print(f"  [Aggregation] Krum selected client_{best_idx}")
+        elif config.AGG_STRATEGY == 'trimmed_mean':
+            global_model = trimmed_mean_aggregate(global_model, client_models, trim_count=1)
+            print("  [Aggregation] Trimmed-Mean applied")
+        else:
+            global_model = fedavg_aggregate(global_model, client_models, client_sizes)
         test_result = evaluate(global_model, testloader, criterion, device)
         history['round'].append(round_num)
         history['global_loss'].append(test_result['loss'])
