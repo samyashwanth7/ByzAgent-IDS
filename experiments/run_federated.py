@@ -15,6 +15,7 @@ from config import (NUM_ROUNDS, NUM_CLIENTS, BATCH_SIZE, LEARNING_RATE,
                     RANDOM_SEED, FEDPROX_MU, DP_ENABLED, DP_EPSILON,
                     DP_DELTA, DP_CLIP_NORM)
 import math
+from src.monitoring.client_stats import ByzAgentMonitor
 from src.model import IDSModel, count_parameters
 from src.dataset import (load_cicids2017, partition_data_iid, partition_data_non_iid, create_dataloaders)
 from src.utils import (set_seed, get_device, train_one_epoch, evaluate, print_metrics, save_results, save_model)
@@ -99,12 +100,15 @@ def run_federated_experiment(non_iid=False, strategy_name='fedavg', alpha=NON_II
     print('  Strategy:   {}'.format(strategy_name))
     criterion = nn.CrossEntropyLoss()
     _, testloader = client_loaders[0]
+    monitor = ByzAgentMonitor(config.RESULTS_DIR / 'byzagent_history.json')
     history = {'round': [], 'global_loss': [], 'global_acc': [], 'global_f1': [], 'global_precision': [], 'global_recall': []}
     print('\nStarting Federated Learning...')
     print('-' * 70)
     start_time = time.time()
     for round_num in range(1, num_rounds + 1):
         client_models = []
+        client_losses = []
+        client_val_accs = []
         for client_id in range(NUM_CLIENTS):
             local_model = IDSModel(input_dim=input_dim, num_classes=num_classes)
             local_model.load_state_dict(copy.deepcopy(global_model.state_dict()))
@@ -123,12 +127,35 @@ def run_federated_experiment(non_iid=False, strategy_name='fedavg', alpha=NON_II
                 )
                 
             optimizer = torch.optim.Adam(local_model.parameters(), lr=config.LEARNING_RATE)
+            final_loss = 0.0
             for epoch in range(config.LOCAL_EPOCHS):
                 if strategy_name == 'fedprox':
-                    train_local_fedprox(local_model, global_model, trainloader, optimizer, criterion, device, mu=FEDPROX_MU)
+                    res = train_local_fedprox(local_model, global_model, trainloader, optimizer, criterion, device, mu=config.FEDPROX_MU)
+                    final_loss = res['loss'] if isinstance(res, dict) else res
                 else:
-                    train_one_epoch(local_model, trainloader, optimizer, criterion, device)
+                    res = train_one_epoch(local_model, trainloader, optimizer, criterion, device)
+                    final_loss = res['loss'] if isinstance(res, dict) else res
+            
             client_models.append(local_model)
+            client_losses.append(final_loss)
+            
+            # Validation accuracy on clean test set
+            val_res = evaluate(local_model, testloader, criterion, device)
+            client_val_accs.append(val_res['accuracy'])
+        
+        # ByzAgent Phase 1: Compute Stats
+        round_stats = monitor.compute_round_stats(
+            round_num=round_num,
+            global_model=global_model,
+            client_models=client_models,
+            local_losses=client_losses,
+            val_accuracies=client_val_accs
+        )
+        # Print stats for verification
+        print(f"  [ByzAgent] Stats for Round {round_num}:")
+        for cid, stats in round_stats.items():
+            print(f"    {cid}: norm={stats['update_norm']:.4f}, cos_peer={stats['cos_sim_peer_mean']:.4f}, loss={stats['local_loss']:.4f}, val_acc={stats['val_accuracy']:.4f}")
+            
         global_model = fedavg_aggregate(global_model, client_models, client_sizes)
         test_result = evaluate(global_model, testloader, criterion, device)
         history['round'].append(round_num)

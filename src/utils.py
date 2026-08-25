@@ -21,22 +21,40 @@ def get_device():
 
 def train_one_epoch(model, dataloader, optimizer, criterion, device):
     model.train()
-    model.to(device)
     total_loss = 0.0
-    correct = 0
-    total = 0
-    for batch_x, batch_y in dataloader:
-        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+    for X, y in dataloader:
+        X, y = X.to(device), y.to(device)
         optimizer.zero_grad()
-        outputs = model(batch_x)
-        loss = criterion(outputs, batch_y)
+        out = model(X)
+        loss = criterion(out, y)
         loss.backward()
         optimizer.step()
-        total_loss += loss.item() * batch_x.size(0)
-        _, predicted = torch.max(outputs, 1)
-        correct += (predicted == batch_y).sum().item()
-        total += batch_y.size(0)
-    return {'loss': total_loss / total, 'accuracy': correct / total}
+        total_loss += loss.item()
+    return total_loss / len(dataloader)
+
+def train_local_fedprox(model, global_model, dataloader, optimizer, criterion, device, mu=0.01):
+    model.train()
+    global_weight_collector = list(global_model.parameters())
+    total_loss = 0.0
+    for X, y in dataloader:
+        X, y = X.to(device), y.to(device)
+        optimizer.zero_grad()
+        out = model(X)
+        
+        # Standard loss
+        loss = criterion(out, y)
+        
+        # Proximal term
+        proximal_term = 0.0
+        for param, global_param in zip(model.parameters(), global_weight_collector):
+            proximal_term += ((param - global_param.to(device)) ** 2).sum()
+            
+        loss += (mu / 2) * proximal_term
+        
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+    return total_loss / len(dataloader)
 
 def evaluate(model, dataloader, criterion, device):
     model.eval()
