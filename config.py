@@ -20,17 +20,26 @@ HIDDEN_DIM_2 = 64
 DROPOUT_RATE = 0.3
 
 # Training
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 LEARNING_RATE = 0.001
 NUM_EPOCHS = 20
 RANDOM_SEED = 42
 
 # Federated Learning
-NUM_CLIENTS = 3
 NUM_ROUNDS = 10
-LOCAL_EPOCHS = 1
+NUM_CLIENTS = 3
+LOCAL_EPOCHS = 3
 NON_IID_ALPHA = 0.5
+BATCH_SIZE = 128
+LEARNING_RATE = 0.001
 FEDPROX_MU = 0.01
+
+# ByzAgent Phase 0: Poisoning Simulation
+POISON_ENABLED = True
+ATTACKER_CLIENTS = [1, 2] # Clients 1 and 2 are malicious
+POISON_MODE = "sudden" # 'sudden' or 'gradual'
+POISON_FRACTION_SUDDEN = 0.60 # Flip 60% of labels (make it strong to guarantee drop)
+POISON_FRACTION_GRADUAL_STEP = 0.10 # +10% per round
 
 # Classification
 BINARY_CLASSIFICATION = False
@@ -46,7 +55,7 @@ ATTACK_CLASSES = [
 ]
 
 # Differential Privacy
-DP_ENABLED = True
+DP_ENABLED = False
 DP_EPSILON = 8.0
 DP_DELTA = 1e-5
 DP_CLIP_NORM = 10.0

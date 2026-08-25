@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 import argparse
+import config
 import torch
 import torch.nn as nn
 import numpy as np
@@ -108,8 +109,21 @@ def run_federated_experiment(non_iid=False, strategy_name='fedavg', alpha=NON_II
             local_model = IDSModel(input_dim=input_dim, num_classes=num_classes)
             local_model.load_state_dict(copy.deepcopy(global_model.state_dict()))
             trainloader, _ = client_loaders[client_id]
-            optimizer = torch.optim.Adam(local_model.parameters(), lr=LEARNING_RATE)
-            for epoch in range(LOCAL_EPOCHS):
+            
+            # Apply Poisoning (ByzAgent Phase 0)
+            if config.POISON_ENABLED and client_id in config.ATTACKER_CLIENTS:
+                from src.attacks.label_flip import apply_label_flip
+                trainloader = apply_label_flip(
+                    trainloader, 
+                    round_num, 
+                    mode=config.POISON_MODE, 
+                    sudden_frac=config.POISON_FRACTION_SUDDEN, 
+                    gradual_step=config.POISON_FRACTION_GRADUAL_STEP,
+                    num_classes=num_classes
+                )
+                
+            optimizer = torch.optim.Adam(local_model.parameters(), lr=config.LEARNING_RATE)
+            for epoch in range(config.LOCAL_EPOCHS):
                 if strategy_name == 'fedprox':
                     train_local_fedprox(local_model, global_model, trainloader, optimizer, criterion, device, mu=FEDPROX_MU)
                 else:
