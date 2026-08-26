@@ -1,14 +1,54 @@
-# XFed-IDS: Explainable Federated Intrusion Detection System
+# ByzAgent-IDS: Agentic Byzantine Trust Diagnosis for Federated Intrusion Detection
 
-> **A multi-organization federated learning framework for network intrusion detection with SHAP-based explainability.**
+ByzAgent-IDS (formerly XFed-IDS) is an advanced Federated Learning framework for network intrusion detection. It introduces an **Agentic AI Trust Arbiter** to detect and neutralize Byzantine poisoning attacks (such as label-flipping) from malicious clients.
 
----
+Instead of relying on rigid, single-round mathematical thresholds (like Krum or Trimmed-Mean) which are highly vulnerable to Sybil attacks and slow-drip adaptive poisoning, **ByzAgent** extracts behavioral statistics over a rolling history and feeds them to a Large Language Model (LLM). The agent reasons over these temporal trends to dynamically **trust, downweight, or quarantine** malicious clients, providing natural language explanations for its actions to SOC analysts.
 
-## 👨‍🏫 Project Overview (For Evaluators & Teachers)
+## Key Contributions & Features
+1. **Agentic Aggregation (Phase 3):** An LLM-powered (LangChain + Groq API) aggregator that analyzes 4 key behavioral metrics (Update Norm, Peer Cosine Similarity, Local Loss, Validation Drop) to quarantine poisoned updates.
+2. **Robust Baseline Analysis (Phase 2):** Includes Krum and Trimmed-Mean aggregators, successfully proving that traditional mathematical defenses fail when attackers form a majority (Sybil attack).
+3. **Poisoning Simulator (Phase 0-1):** Simulates both Sudden and Gradual label-flipping attacks across distributed organizations.
+4. **Deep Explainability:** SHAP-based feature importance mapping to understand the PyTorch MLP's underlying network packet classifications.
+5. **Real-time Dashboard:** A React + FastAPI frontend to visualize agent decisions, confusion matrices, and model accuracy across rounds.
 
-### The Problem: Data Silos in Cybersecurity
-In modern cybersecurity, Intrusion Detection Systems (IDS) rely on Machine Learning models to detect zero-day attacks. However, a model is only as good as the data it is trained on. Different organizations (e.g., hospitals, banks, universities) experience different types of cyberattacks. 
-Ideally, they would pool their network traffic data together to train a massive, highly accurate global model. But due to strict privacy laws (like GDPR, HIPAA) and corporate confidentiality, **organizations cannot legally share their raw network traffic data**.
+## Architecture
+
+```
+[ CICIDS-2017 Data ] --> [ PyTorch Clients (Local Training) ]
+                                      |
+                               (Model Updates)
+                                      v
+[ ByzAgent Arbiter ] <-- [ Behavioral Stats Extractor ]
+(LLM JSON Decision)                   |
+        |                             v
+        +-------------------> [ Aggregation ] --> [ Global Model ]
+```
+
+## How to Run the Federated Experiment
+
+1. **Setup Environment**
+```bash
+pip install -r requirements.txt
+```
+
+2. **Configure the Strategy**
+Edit `config.py` to set the attack scenarios and defenses:
+```python
+POISON_ENABLED = True
+ATTACKER_CLIENTS = [1, 2] # Test a Sybil Attack
+AGG_STRATEGY = "byzagent" # Choose: 'fedavg', 'krum', 'trimmed_mean', or 'byzagent'
+```
+
+3. **Run the Simulation**
+```bash
+python experiments/run_federated.py
+```
+*Note: If using `byzagent`, ensure you have a `.env` file with a valid `GROQ_API_KEY`.*
+
+## Results: The Krum Failure vs. ByzAgent Success
+During testing with 3 clients (2 Attackers, 1 Clean):
+- **Krum** mistakenly trusted the attackers (because they formed a mathematical majority cluster) and rejected the clean client, crashing the model accuracy to `84.9%`.
+- **ByzAgent** recognized the massive spike in the attackers' `local_loss` and drop in `val_accuracy`, successfully quarantining both attackers and maintaining a `98.6%` global accuracy. 
 
 ### The Solution: Federated Learning (FL)
 XFed-IDS solves this using **Federated Learning**. Instead of bringing the data to the model, we bring the model to the data:
