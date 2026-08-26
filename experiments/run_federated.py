@@ -10,12 +10,14 @@ import torch.nn as nn
 import numpy as np
 import time
 import copy
+import json
 from config import (NUM_ROUNDS, NUM_CLIENTS, BATCH_SIZE, LEARNING_RATE,
                     LOCAL_EPOCHS, NON_IID_ALPHA, RESULTS_DIR, MODEL_DIR,
                     RANDOM_SEED, FEDPROX_MU, DP_ENABLED, DP_EPSILON,
                     DP_DELTA, DP_CLIP_NORM)
 import math
 from src.monitoring.client_stats import ByzAgentMonitor
+from src.agents.byz_agent import ByzAgentTrustArbiter
 from src.aggregation.robust_baselines import krum_aggregate, trimmed_mean_aggregate
 from src.model import IDSModel, count_parameters
 from src.dataset import (load_cicids2017, partition_data_iid, partition_data_non_iid, create_dataloaders)
@@ -101,7 +103,9 @@ def run_federated_experiment(non_iid=False, strategy_name='fedavg', alpha=NON_II
     print('  Strategy:   {}'.format(strategy_name))
     criterion = nn.CrossEntropyLoss()
     _, testloader = client_loaders[0]
-    monitor = ByzAgentMonitor(config.RESULTS_DIR / 'byzagent_history.json')
+    monitor = ByzAgentMonitor(config.RESULTS_DIR / "byzagent_history.json")
+    arbiter = ByzAgentTrustArbiter()
+    all_decisions = []
     history = {'round': [], 'global_loss': [], 'global_acc': [], 'global_f1': [], 'global_precision': [], 'global_recall': []}
     print('\nStarting Federated Learning...')
     print('-' * 70)
@@ -157,7 +161,37 @@ def run_federated_experiment(non_iid=False, strategy_name='fedavg', alpha=NON_II
         for cid, stats in round_stats.items():
             print(f"    {cid}: norm={stats['update_norm']:.4f}, cos_peer={stats['cos_sim_peer_mean']:.4f}, loss={stats['local_loss']:.4f}, val_acc={stats['val_accuracy']:.4f}")
             
-        if config.AGG_STRATEGY == 'krum':
+        if config.AGG_STRATEGY == 'byzagent':
+            decisions_json = arbiter.evaluate_clients(round_num, round_stats)
+            decisions_json['round'] = round_num
+            all_decisions.append(decisions_json)
+            with open(config.RESULTS_DIR / 'byzagent_decisions.json', 'w') as df:
+                json.dump(all_decisions, df, indent=2)
+                
+            trusted_models = []
+            trusted_sizes = []
+            for d in decisions_json.get('decisions', []):
+                try:
+                    c_idx = int(d['client_id'].split('_')[1])
+                except Exception:
+                    continue
+                decision = d.get('decision', 'trust').lower()
+                print(f"    -> {d['client_id']}: {decision.upper()} | {d.get('explanation', '')}")
+                
+                if decision == 'trust':
+                    trusted_models.append(client_models[c_idx])
+                    trusted_sizes.append(client_sizes[c_idx])
+                elif decision == 'downweight':
+                    trusted_models.append(client_models[c_idx])
+                    trusted_sizes.append(client_sizes[c_idx] * 0.3)
+                elif decision == 'quarantine':
+                    pass # completely exclude
+            
+            if len(trusted_models) > 0:
+                global_model = fedavg_aggregate(global_model, trusted_models, trusted_sizes)
+            else:
+                print("  [ERROR] All clients quarantined! Skipping update this round.")
+        elif config.AGG_STRATEGY == 'krum':
             global_model, best_idx = krum_aggregate(global_model, client_models, f=len(config.ATTACKER_CLIENTS) if config.POISON_ENABLED else 1)
             print(f"  [Aggregation] Krum selected client_{best_idx}")
         elif config.AGG_STRATEGY == 'trimmed_mean':

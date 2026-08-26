@@ -6,6 +6,7 @@ import Alerts from './pages/Alerts';
 import Explain from './pages/Explain';
 import Compare from './pages/Compare';
 import Analytics from './pages/Analytics';
+import ByzAgentView from './pages/ByzAgentView';
 
 function App() {
   return (
@@ -35,6 +36,10 @@ function App() {
               <PieChart size={20} />
               Analytics
             </NavLink>
+            <NavLink to="/byzagent" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <Activity size={20} />
+              ByzAgent Arbiter
+            </NavLink>
             <NavLink to="/compare" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
               <GitMerge size={20} />
               Federated Compare
@@ -49,6 +54,7 @@ function App() {
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/explain" element={<Explain />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/byzagent" element={<ByzAgentView />} />
             <Route path="/compare" element={<Compare />} />
           </Routes>
         </main>

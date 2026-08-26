@@ -333,3 +333,15 @@ def reload_model():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
+@app.get("/byzagent/decisions")
+async def get_byzagent_decisions():
+    file_path = config.RESULTS_DIR / "byzagent_decisions.json"
+    if not file_path.exists():
+        return {"data": []}
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+        return {"data": data}
+    except Exception:
+        return {"data": []}
