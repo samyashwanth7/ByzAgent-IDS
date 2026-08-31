@@ -238,4 +238,4 @@ if __name__ == '__main__':
     parser.add_argument('--alpha', type=float, default=NON_IID_ALPHA)
     parser.add_argument('--rounds', type=int, default=NUM_ROUNDS)
     args = parser.parse_args()
-    run_federated_experiment(non_iid=args.non_iid, strategy_name=args.strategy, alpha=args.alpha, num_rounds=args.rounds)
+    run_federated_experiment(non_iid=args.non_iid, strategy_name=config.AGG_STRATEGY, alpha=args.alpha, num_rounds=args.rounds)

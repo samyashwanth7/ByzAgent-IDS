@@ -26,10 +26,10 @@ NUM_EPOCHS = 20
 RANDOM_SEED = 42
 
 # Federated Learning
-NUM_ROUNDS = 2
+NUM_ROUNDS = 10
 NUM_CLIENTS = 3
-LOCAL_EPOCHS = 1
-AGG_STRATEGY = "trimmed_mean" # 'fedavg', 'krum', or 'trimmed_mean'
+LOCAL_EPOCHS = 3
+AGG_STRATEGY = "byzagent" # 'fedavg', 'krum', 'trimmed_mean', or 'byzagent'
 NON_IID_ALPHA = 0.5
 BATCH_SIZE = 128
 LEARNING_RATE = 0.001
@@ -37,7 +37,7 @@ FEDPROX_MU = 0.01
 
 # ByzAgent Phase 0: Poisoning Simulation
 POISON_ENABLED = True
-ATTACKER_CLIENTS = [1] # Only 1 malicious client so Krum can mathematically function
+ATTACKER_CLIENTS = [1, 2] # 2 malicious clients (sybil attack)
 POISON_MODE = "sudden" # 'sudden' or 'gradual'
 POISON_FRACTION_SUDDEN = 0.60 # Flip 60% of labels (make it strong to guarantee drop)
 POISON_FRACTION_GRADUAL_STEP = 0.10 # +10% per round
