@@ -1,4 +1,4 @@
-"""XFed-IDS Configuration"""
+"""Central config for the whole project. Edit AGG_STRATEGY and ATTACKER_CLIENTS to run different experiments."""
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
