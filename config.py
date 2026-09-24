@@ -38,7 +38,7 @@ FEDPROX_MU = 0.01
 # ByzAgent Phase 0: Poisoning Simulation
 POISON_ENABLED = True
 ATTACKER_CLIENTS = [1, 2] # 2 malicious clients (sybil attack)
-POISON_MODE = "sudden" # 'sudden' or 'gradual'
+POISON_MODE = "gradual" # 'sudden' or 'gradual'
 POISON_FRACTION_SUDDEN = 0.60 # Flip 60% of labels (make it strong to guarantee drop)
 POISON_FRACTION_GRADUAL_STEP = 0.10 # +10% per round
 

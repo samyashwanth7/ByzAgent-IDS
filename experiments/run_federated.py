@@ -176,7 +176,8 @@ def run_federated_experiment(non_iid=False, strategy_name='fedavg', alpha=NON_II
                 except Exception:
                     continue
                 decision = d.get('decision', 'trust').lower()
-                print(f"    -> {d['client_id']}: {decision.upper()} | {d.get('explanation', '')}")
+                explanation = d.get('explanation', '').encode('ascii', 'replace').decode('ascii')
+                print(f"    -> {d['client_id']}: {decision.upper()} | {explanation}")
                 
                 if decision == 'trust':
                     trusted_models.append(client_models[c_idx])
@@ -222,9 +223,10 @@ def run_federated_experiment(non_iid=False, strategy_name='fedavg', alpha=NON_II
         'final_precision': final_result['precision'], 'final_recall': final_result['recall'],
         'final_loss': final_result['loss'], 'history': history, 'label_names': label_names,
     }
-    result_filename = 'federated_{}_{}.json'.format(partition_type.lower(), strategy_name)
+    poison_tag = '_gradual' if config.POISON_MODE == 'gradual' and config.POISON_ENABLED else ''
+    result_filename = 'federated_{}_{}{}.json'.format(partition_type.lower(), strategy_name, poison_tag)
     save_results(results, RESULTS_DIR / result_filename)
-    model_filename = 'federated_{}_{}.pt'.format(partition_type.lower(), strategy_name)
+    model_filename = 'federated_{}_{}{}.pt'.format(partition_type.lower(), strategy_name, poison_tag)
     save_model(global_model, MODEL_DIR / model_filename)
     print('\n[OK] Federated experiment complete!')
     print('   Accuracy: {:.2f}%'.format(final_result['accuracy']*100))
