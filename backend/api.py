@@ -72,9 +72,15 @@ def _load_model_and_explainer():
     _y_test = y_test
     
     num_classes = len(label_names)
-    print("Loading global federated model ({} classes)...".format(num_classes))
+    # Load the best model — ByzAgent successfully quarantined attackers
+    model_path = MODEL_DIR / 'federated_iid_byzagent_gradual.pt'
+    if not model_path.exists():
+        model_path = MODEL_DIR / 'federated_iid_byzagent.pt'
+    if not model_path.exists():
+        model_path = MODEL_DIR / 'federated_iid_fedavg.pt'
+    print("Loading model from {}...".format(model_path.name))
     model = IDSModel(input_dim=len(feature_names), num_classes=num_classes)
-    model.load_state_dict(torch.load(MODEL_DIR / 'federated_iid_fedavg.pt', map_location='cpu', weights_only=True))
+    model.load_state_dict(torch.load(model_path, map_location='cpu', weights_only=True))
     model.eval()
     
     print("Initializing SHAP KernelExplainer...")
