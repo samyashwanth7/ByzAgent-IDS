@@ -274,3 +274,54 @@ tr:hover td {
 .spin {
   animation: spin 1s linear infinite;
 }
+
+/* Architecture Flowchart */
+.arch-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 0;
+}
+.arch-row {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.arch-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 24px;
+  border-radius: 12px;
+  text-align: center;
+  width: 260px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.arch-box:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+  transform: translateY(-5px);
+}
+.arch-box.attacker { border-color: var(--status-critical); }
+.arch-box.defender { border-color: #00c864; background: rgba(0, 200, 100, 0.05); }
+.arch-box h4 { margin-bottom: 8px; color: var(--text-primary); font-size: 16px; }
+.arch-box p { font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+.arch-arrow-vertical {
+  height: 40px;
+  width: 2px;
+  background: var(--border-color);
+  position: relative;
+}
+.arch-arrow-vertical::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: -5px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--border-color);
+}

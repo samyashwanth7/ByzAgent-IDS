@@ -101,6 +101,29 @@ export default function ByzAgentView() {
         </div>
       </div>
 
+      {/* How it decides visual */}
+      <div className="card" style={{ marginBottom: '24px', padding: '24px', background: 'rgba(0, 240, 255, 0.02)', border: '1px solid rgba(0, 240, 255, 0.1)' }}>
+        <h3 style={{ marginTop: 0, marginBottom: '16px', color: 'var(--text-primary)' }}>How the LLM Evaluates Trust</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+          <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ margin: '0 0 8px 0', color: 'var(--accent-cyan)' }}>1. Update Norm</h4>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Are the model weights changing drastically? (High norm = suspicious)</p>
+          </div>
+          <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ margin: '0 0 8px 0', color: 'var(--accent-cyan)' }}>2. Cosine Similarity</h4>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Does this update align with peers, or is it diverging?</p>
+          </div>
+          <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ margin: '0 0 8px 0', color: 'var(--accent-cyan)' }}>3. Local Loss</h4>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Is the client struggling to fit the data? (Poisoning increases loss)</p>
+          </div>
+          <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ margin: '0 0 8px 0', color: 'var(--accent-cyan)' }}>4. Temporal History</h4>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>How has this client behaved over the past 5 rounds?</p>
+          </div>
+        </div>
+      </div>
+
       {/* Accuracy chart */}
       {chartData.length > 0 && (
         <div className="card" style={{ marginBottom: '24px', padding: '20px' }}>

@@ -54,7 +54,10 @@ export default function Alerts() {
   return (
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h1>Network Alerts (Live Stream)</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Shield size={28} color="var(--accent-cyan)" /> 
+          Live Intrusion Feed
+        </h1>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {stats.feedbackCount > 0 && (
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
@@ -71,6 +74,11 @@ export default function Alerts() {
             {stats.isRetraining ? 'Retraining...' : 'Retrain Model'}
           </button>
         </div>
+      </div>
+
+      <div style={{ background: 'rgba(0, 240, 255, 0.02)', border: '1px solid rgba(0, 240, 255, 0.15)', padding: '16px', borderRadius: '8px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+        This feed shows real network packets being classified by the robust ByzAgent model in real-time. 
+        To see traffic flowing, run <code style={{ color: 'var(--accent-cyan)' }}>python backend/simulate_traffic.py</code> in your terminal.
       </div>
 
       {feedbackMsg && (
@@ -104,7 +112,7 @@ export default function Alerts() {
             ) : alerts.map((alert) => (
               <tr key={alert.id} className="animate-fade-in">
                 <td style={{ color: 'var(--accent-cyan)', fontWeight: 500 }}>{alert.id}</td>
-                <td>{alert.type}</td>
+                <td style={{ color: alert.type === 'BENIGN' ? '#00c864' : 'var(--status-critical)', fontWeight: 600 }}>{alert.type}</td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ width: '60px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>

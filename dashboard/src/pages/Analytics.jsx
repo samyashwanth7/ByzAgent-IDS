@@ -109,6 +109,15 @@ const Analytics = () => {
     <div className="animate-fade-in">
       <h1>Analytics</h1>
       
+      <div className="card" style={{ marginBottom: '24px', padding: '24px', background: 'rgba(0, 240, 255, 0.02)', border: '1px solid rgba(0, 240, 255, 0.1)' }}>
+        <h3 style={{ marginTop: 0, marginBottom: '8px', color: 'var(--text-primary)' }}>CICIDS-2017 Dataset Summary</h3>
+        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>
+          The model is trained on a highly imbalanced, real-world network traffic dataset. It consists of <strong>2.83 million</strong> total packets 
+          distributed across <strong>8 classes</strong> (BENIGN + 7 attack types). It uses <strong>77 extracted features</strong> including flow duration, 
+          packet length variance, and flag counts.
+        </p>
+      </div>
+      
       <div className="stats-grid">
         <div className="card">
           <div className="stat-label">Overall Accuracy</div>

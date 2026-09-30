@@ -37,10 +37,14 @@ export default function Explain() {
 
   return (
     <div className="animate-fade-in">
-      <h1>Model Explainability (SHAP)</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-        Understand exactly which network features triggered the alert. Positive values push the model toward predicting an attack.
-      </p>
+      <h1 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <BarChart2 size={28} color="var(--accent-cyan)" />
+        Model Explainability (SHAP)
+      </h1>
+      <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderLeft: '4px solid var(--accent-blue)', padding: '16px', borderRadius: '4px', marginBottom: '24px', color: 'var(--text-secondary)' }}>
+        <strong>How it works:</strong> SHAP (SHapley Additive exPlanations) decomposes each prediction into per-feature contributions. 
+        It shows exactly <em>why</em> the model flagged a packet. <span style={{ color: 'var(--status-critical)' }}>Red bars</span> push the model toward predicting an ATTACK, while <span style={{ color: 'var(--accent-blue)' }}>blue bars</span> push it toward BENIGN.
+      </div>
 
       <div style={{ display: 'flex', gap: '24px' }}>
         {/* Sidebar for selecting alerts */}

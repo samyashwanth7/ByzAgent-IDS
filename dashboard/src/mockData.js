@@ -1,7 +1,7 @@
 export const systemStats = {
   totalAlerts: 1432,
   activeNodes: 3,
-  globalAccuracy: 99.79,
+  globalAccuracy: 99.31,
   centralizedAccuracy: 99.87,
   uptime: "14d 6h",
   lastUpdate: "Just now"

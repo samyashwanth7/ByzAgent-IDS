@@ -1,12 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { Shield, Activity, BarChart2, GitMerge, PieChart } from 'lucide-react';
+import { Shield, Activity, BarChart2, GitMerge, PieChart, Layers } from 'lucide-react';
 import Home from './pages/Home';
 import Alerts from './pages/Alerts';
 import Explain from './pages/Explain';
 import Compare from './pages/Compare';
 import Analytics from './pages/Analytics';
 import ByzAgentView from './pages/ByzAgentView';
+import Architecture from './pages/Architecture';
 
 function App() {
   return (
@@ -23,6 +24,10 @@ function App() {
             <NavLink to="/" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
               <Activity size={20} />
               Overview
+            </NavLink>
+            <NavLink to="/architecture" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <Layers size={20} />
+              Architecture
             </NavLink>
             <NavLink to="/alerts" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
               <Shield size={20} />
@@ -42,7 +47,7 @@ function App() {
             </NavLink>
             <NavLink to="/compare" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
               <GitMerge size={20} />
-              Federated Compare
+              Compare
             </NavLink>
           </nav>
         </aside>
@@ -51,6 +56,7 @@ function App() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/architecture" element={<Architecture />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/explain" element={<Explain />} />
             <Route path="/analytics" element={<Analytics />} />

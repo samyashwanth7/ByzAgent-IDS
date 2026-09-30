@@ -1,0 +1,202 @@
+[
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Low loss (0.044) and high validation accuracy (0.987) with normal update norm and reasonable cosine similarity indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "downweight",
+        "explanation": "High local loss (0.534) despite high validation accuracy suggests slight anomaly, so downweight."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "downweight",
+        "explanation": "Slightly lower validation accuracy (0.970) and high loss (0.534) indicate possible deviation, warranting downweight."
+      }
+    ],
+    "round": 1
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Lower cosine similarity (0.726) despite normal loss and high accuracy suggests slight divergence."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "downweight",
+        "explanation": "High local loss (0.864) with comparable accuracy indicates possible label\u2011flipping, warranting reduced weight."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "downweight",
+        "explanation": "Elevated loss (0.863) despite good accuracy signals potential poisoning, so the update should be downweighted."
+      }
+    ],
+    "round": 2
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "High update_norm (13.0) and lower cos_sim (0.71) despite low loss and high accuracy suggest divergence."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Update_norm and cos_sim are typical, loss (1.13) and val_accuracy (0.983) align with peers."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Metrics similar to client_1 with normal norm, cos_sim, loss and acceptable accuracy."
+      }
+    ],
+    "round": 3
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Low loss (0.034) and high val_accuracy (0.988) with the highest cosine similarity (0.769) indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "downweight",
+        "explanation": "High local_loss (1.352) despite decent val_accuracy (0.974) suggests mild anomaly, so downweight."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "High loss (1.352), low val_accuracy (0.869) and lower cosine similarity (0.706) indicate clear poisoning."
+      }
+    ],
+    "round": 4
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Low loss (0.031) and high validation accuracy (0.992) indicate good performance, but the unusually high update norm (12.08) and low cosine similarity (0.569) suggest divergence from peers."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "downweight",
+        "explanation": "Local loss is high (1.535) and validation accuracy is lower (0.941) than client_0, indicating possible poisoning despite a normal update norm (9.67) and high cosine similarity (0.733)."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "High loss (1.535) combined with a sharp drop in validation accuracy (0.850) and normal similarity (0.732) point to clear label\u2011flipping poisoning."
+      }
+    ],
+    "round": 5
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Low loss (0.03) and high val_accuracy (0.989) are normal, but cosine similarity (0.509) is notably lower than peers, indicating slight divergence."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "High local_loss (1.68) and reduced val_accuracy (0.849) together with moderate cosine similarity suggest clear poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Similar high loss (1.68) and low val_accuracy (0.850) as client_1 indicate likely label\u2011flipping attack."
+      }
+    ],
+    "round": 6
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Low cosine similarity (0.41) despite very low loss (0.028) and high validation accuracy (0.989) suggests mild divergence."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "High local loss (1.78) and sharp drop in validation accuracy (0.849) indicate likely poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "High local loss (1.78) and low validation accuracy (0.849) match poisoning signatures."
+      }
+    ],
+    "round": 7
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Low loss (0.028) and high validation accuracy (0.991) indicate normal behavior despite modest cosine similarity (0.389)."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "High local loss (1.845) and reduced validation accuracy (0.849) signal poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "High local loss (1.845) and reduced validation accuracy (0.849) signal poisoning."
+      }
+    ],
+    "round": 8
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Low cosine similarity (0.36) despite excellent loss (0.027) and validation accuracy (0.99) suggests divergence from peers."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Very high local loss (1.84) and extremely low validation accuracy (0.05) indicate likely poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "High local loss (1.84) combined with near\u2011zero validation accuracy (0.03) points to a poisoned update."
+      }
+    ],
+    "round": 9
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Low cosine similarity (0.31) despite very low loss (0.026) and high validation accuracy (0.99) suggests divergence, so downweight."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Very high loss (1.69) and near\u2011zero validation accuracy (0.005) indicate poisoning, so quarantine."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Very high loss (1.69) and near\u2011zero validation accuracy (0.006) indicate poisoning, so quarantine."
+      }
+    ],
+    "round": 10
+  }
+]

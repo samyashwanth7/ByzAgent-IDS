@@ -364,3 +364,15 @@ async def get_byzagent_history():
         return {"data": data}
     except Exception:
         return {"data": {}}
+
+@app.get("/results/comparison")
+async def get_comparison_data():
+    """Serve experiment results for the Compare page."""
+    comparison = {}
+    for name in ['federated_iid_fedavg', 'federated_iid_krum', 
+                 'federated_iid_byzagent', 'federated_iid_byzagent_gradual']:
+        path = RESULTS_DIR / f"{name}.json"
+        if path.exists():
+            with open(path, "r") as f:
+                comparison[name] = json.load(f)
+    return comparison
