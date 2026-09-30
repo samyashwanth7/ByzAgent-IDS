@@ -16,7 +16,7 @@ function App() {
         <aside className="sidebar">
           <div className="brand">
             <Shield size={32} color="var(--accent-cyan)" />
-            <span>XFed-IDS</span>
+            <span>ByzAgent</span>
           </div>
           
           <nav className="nav-links">
@@ -64,3 +64,4 @@ function App() {
 }
 
 export default App;
+

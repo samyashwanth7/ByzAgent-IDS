@@ -20,9 +20,11 @@ def simulate():
     while True:
         try:
             # Pick a random sample from the test set
-            # We want to artificially inflate attack frequency slightly so we see alerts on the dashboard
-            if random.random() < 0.2: # 20% chance of an attack sample
-                idx = random.choice(np.where(y_test == 1)[0])
+            # Pick a random sample - boost attack frequency so dashboard is interesting
+            if random.random() < 0.3:  # 30% chance of an attack sample
+                # Pick from ANY attack class (1-7), not just class 1
+                attack_classes = np.where(y_test != 0)[0]
+                idx = random.choice(attack_classes)
             else:
                 idx = random.choice(np.where(y_test == 0)[0])
                 

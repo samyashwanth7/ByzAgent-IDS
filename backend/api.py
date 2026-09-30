@@ -1,6 +1,7 @@
 import sys
 import os
 import csv
+import json
 import subprocess
 from pathlib import Path
 from datetime import datetime
@@ -16,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Ensure imports work from the root directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from config import MODEL_DIR, BASE_DIR, ATTACK_CLASSES, DP_ENABLED, DP_EPSILON
+from config import MODEL_DIR, BASE_DIR, ATTACK_CLASSES, DP_ENABLED, DP_EPSILON, RESULTS_DIR
 from src.model import IDSModel
 from src.dataset import load_cicids2017
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
@@ -336,7 +337,7 @@ def reload_model():
 
 @app.get("/byzagent/decisions")
 async def get_byzagent_decisions():
-    file_path = config.RESULTS_DIR / "byzagent_decisions.json"
+    file_path = RESULTS_DIR / "byzagent_decisions.json"
     if not file_path.exists():
         return {"data": []}
     try:
@@ -345,3 +346,15 @@ async def get_byzagent_decisions():
         return {"data": data}
     except Exception:
         return {"data": []}
+
+@app.get("/byzagent/history")
+async def get_byzagent_history():
+    file_path = RESULTS_DIR / "byzagent_history.json"
+    if not file_path.exists():
+        return {"data": {}}
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+        return {"data": data}
+    except Exception:
+        return {"data": {}}
