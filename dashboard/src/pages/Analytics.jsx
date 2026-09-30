@@ -129,24 +129,33 @@ const Analytics = () => {
       {renderConfusionMatrix()}
 
       <div className="card" style={{ height: '600px' }}>
-        <h3 style={{ marginBottom: '24px' }}>Per-Class Performance Metrics</h3>
-        <ResponsiveContainer width="100%" height="100%">
+        <h3 style={{ marginBottom: '8px' }}>Per-Class Performance Metrics (%)</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 16px 0' }}>
+          All 8 attack types detected. Values shown as percentages.
+        </p>
+        <ResponsiveContainer width="100%" height="85%">
           <BarChart
             layout="vertical"
-            data={data.per_class_metrics}
+            data={data.per_class_metrics.map(c => ({
+              ...c,
+              precision: (c.precision * 100).toFixed(1),
+              recall: (c.recall * 100).toFixed(1),
+              f1: (c.f1 * 100).toFixed(1)
+            }))}
             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" horizontal={false} />
-            <XAxis type="number" domain={[0, 1]} tick={{ fill: 'var(--text-secondary)' }} />
+            <XAxis type="number" domain={[0, 100]} tick={{ fill: 'var(--text-secondary)' }} unit="%" />
             <YAxis dataKey="name" type="category" width={100} tick={{ fill: 'var(--text-secondary)' }} />
-            <Tooltip 
+            <Tooltip
               contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}
               itemStyle={{ color: 'var(--text-primary)' }}
+              formatter={(val) => `${val}%`}
             />
             <Legend />
-            <Bar dataKey="precision" name="Precision" fill="var(--accent-cyan)" />
-            <Bar dataKey="recall" name="Recall" fill="var(--accent-blue)" />
-            <Bar dataKey="f1" name="F1 Score" fill="var(--status-good)" />
+            <Bar dataKey="precision" name="Precision" fill="var(--accent-cyan)" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="recall" name="Recall" fill="var(--accent-blue)" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="f1" name="F1 Score" fill="var(--status-good)" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
