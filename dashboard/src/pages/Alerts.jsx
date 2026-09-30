@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Shield } from 'lucide-react';
 
 export default function Alerts() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, BarChart2 } from 'lucide-react';
 
 export default function Explain() {
   const location = useLocation();
