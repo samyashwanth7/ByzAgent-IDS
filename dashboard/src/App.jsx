@@ -1,73 +1,61 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { Shield, Activity, BarChart2, GitMerge, PieChart, Layers } from 'lucide-react';
-import Home from './pages/Home';
-import Alerts from './pages/Alerts';
-import Explain from './pages/Explain';
-import Compare from './pages/Compare';
-import Analytics from './pages/Analytics';
-import ByzAgentView from './pages/ByzAgentView';
-import Architecture from './pages/Architecture';
+import React, { useEffect } from 'react';
+import { Shield } from 'lucide-react';
+import Hero from './sections/Hero';
+import Problem from './sections/Problem';
+import Architecture from './sections/Architecture';
+import Results from './sections/Results';
+import LiveDemo from './sections/LiveDemo';
+import Reasoning from './sections/Reasoning';
+import Footer from './sections/Footer';
 
 function App() {
-  return (
-    <Router>
-      <div className="app-container">
-        {/* Sidebar */}
-        <aside className="sidebar">
-          <div className="brand">
-            <Shield size={32} color="var(--accent-cyan)" />
-            <span>ByzAgent</span>
-          </div>
-          
-          <nav className="nav-links">
-            <NavLink to="/" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-              <Activity size={20} />
-              Overview
-            </NavLink>
-            <NavLink to="/architecture" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-              <Layers size={20} />
-              Architecture
-            </NavLink>
-            <NavLink to="/alerts" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-              <Shield size={20} />
-              Alerts
-            </NavLink>
-            <NavLink to="/explain" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-              <BarChart2 size={20} />
-              Explainability
-            </NavLink>
-            <NavLink to="/analytics" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-              <PieChart size={20} />
-              Analytics
-            </NavLink>
-            <NavLink to="/byzagent" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-              <Activity size={20} />
-              ByzAgent Arbiter
-            </NavLink>
-            <NavLink to="/compare" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-              <GitMerge size={20} />
-              Compare
-            </NavLink>
-          </nav>
-        </aside>
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
 
-        {/* Main Content */}
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/architecture" element={<Architecture />} />
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/explain" element={<Explain />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/byzagent" element={<ByzAgentView />} />
-            <Route path="/compare" element={<Compare />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div style={{ overflowX: 'clip' }}>
+      {/* Sticky Navbar */}
+      <nav className="navbar">
+        <a href="#" className="nav-brand">
+          <Shield size={22} />
+          ByzAgent
+        </a>
+        <ul className="nav-links">
+          <li><a href="#problem">Problem</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#results">Results</a></li>
+          <li><a href="#demo">Live Demo</a></li>
+          <li><a href="#reasoning">Agent Log</a></li>
+          <li>
+            <a href="https://github.com/samyashwanth7/ByzAgent-IDS" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>
+              GitHub ↗
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <Hero />
+      <Problem />
+      <Architecture />
+      <Results />
+      <LiveDemo />
+      <Reasoning />
+      <Footer />
+    </div>
   );
 }
 
 export default App;
-
