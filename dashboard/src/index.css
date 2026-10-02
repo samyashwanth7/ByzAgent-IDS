@@ -615,3 +615,20 @@ tr:hover td { background: rgba(255, 255, 255, 0.01); }
   color: var(--text-secondary);
   font-weight: 500;
 }
+
+/* ===== FIX DASHBOARD SPACING ===== */
+.dashboard-main .section,
+.dashboard-main .section-full {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+}
+
+.dashboard-main .divider {
+  display: none !important;
+}
+
+.dashboard-main .reveal {
+  opacity: 1 !important;
+  transform: none !important;
+}
