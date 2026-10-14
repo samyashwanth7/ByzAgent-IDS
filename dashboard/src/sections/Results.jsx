@@ -11,18 +11,13 @@ import {
 } from 'recharts';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
 
-const FALLBACK = {
-  federated_iid_fedavg: { accuracy: 0.9616, history: { val_accuracy: [0.85,0.90,0.92,0.93,0.94,0.95,0.955,0.958,0.960,0.9616] } },
-  federated_iid_krum: { accuracy: 0.849, history: { val_accuracy: [0.85,0.82,0.80,0.78,0.79,0.81,0.83,0.84,0.845,0.849] } },
-  federated_iid_byzagent_gradual: { accuracy: 0.9931, history: { val_accuracy: [0.85,0.92,0.95,0.97,0.98,0.985,0.988,0.990,0.992,0.9931] } }
-};
-
 export default function Results() {
-  const [data, setData] = useState(FALLBACK);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    fetch('http://localhost:8000/results/comparison')
+    fetch('/data/comparison.json')
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
@@ -30,10 +25,12 @@ export default function Results() {
       .then((json) => {
         if (isMounted && json && Object.keys(json).length > 0) {
           setData(json);
+          setLoading(false);
         }
       })
       .catch((err) => {
-        console.warn('Failed to fetch results from backend, using fallback data:', err);
+        console.warn('Failed to fetch /data/comparison.json:', err);
+        setLoading(false);
       });
 
     return () => {
@@ -41,20 +38,12 @@ export default function Results() {
     };
   }, []);
 
-  const fedavgData = data?.federated_iid_fedavg || FALLBACK.federated_iid_fedavg;
-  const krumData = data?.federated_iid_krum || FALLBACK.federated_iid_krum;
-  const byzagentData = data?.federated_iid_byzagent_gradual || data?.federated_iid_byzagent || FALLBACK.federated_iid_byzagent_gradual;
-
-  const getAccuracyVal = (item) => item?.accuracy ?? item?.final_accuracy;
-  const getHistoryList = (item) => item?.history?.val_accuracy || item?.history?.global_acc || [];
-
-  const fedavgAcc = getAccuracyVal(fedavgData);
-  const krumAcc = getAccuracyVal(krumData);
-  const byzagentAcc = getAccuracyVal(byzagentData);
-
-  const fedavgHistory = getHistoryList(fedavgData);
-  const krumHistory = getHistoryList(krumData);
-  const byzagentHistory = getHistoryList(byzagentData);
+  const byz = data?.byzagent_gradual;
+  const rule = data?.rule_gradual;
+  const krum = data?.krum_gradual;
+  const trim = data?.trimmed_mean_gradual;
+  const fedavg = data?.fedavg_gradual;
+  const clean = data?.fedavg_clean;
 
   const formatPercent = (val) => {
     if (val === undefined || val === null) return '--';
@@ -64,16 +53,19 @@ export default function Results() {
 
   const chartData = Array.from({ length: 10 }, (_, i) => {
     const toPct = (hist) => {
+      if (!hist || hist[i] === undefined || hist[i] === null) return null;
       const v = hist[i];
-      if (v === undefined || v === null) return null;
       return +(v <= 1 ? (v * 100).toFixed(2) : v.toFixed(2));
     };
 
     return {
       round: i + 1,
-      ByzAgent: toPct(byzagentHistory),
-      Krum: toPct(krumHistory),
-      FedAvg: toPct(fedavgHistory),
+      ByzAgent: toPct(byz?.acc_history),
+      'Rule Baseline': toPct(rule?.acc_history),
+      Krum: toPct(krum?.acc_history),
+      'Trimmed-Mean': toPct(trim?.acc_history),
+      'FedAvg (Poisoned)': toPct(fedavg?.acc_history),
+      'Clean Reference': toPct(clean?.acc_history),
     };
   });
 
@@ -90,7 +82,7 @@ export default function Results() {
       </h2>
 
       <p className="subtitle" style={{ marginBottom: '60px' }}>
-        Tested under a coordinated Sybil Label-Flipping attack where 2 of 3 clients are malicious across 10 federated rounds.
+        Evaluated under a coordinated Sybil Label-Flipping attack where 2 of 3 clients maliciously flip traffic labels across 10 federated rounds.
       </p>
 
       {/* Main Comparison: Chart + Cards */}
@@ -113,10 +105,10 @@ export default function Results() {
             <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>
               Accuracy over 10 Federated Rounds
             </span>
-            <span className="badge badge-cyan">Validation Accuracy</span>
+            <span className="badge badge-cyan">Real Evaluation Data</span>
           </div>
 
-          <ResponsiveContainer width="100%" height={350}>
+          <ResponsiveContainer width="100%" height={380}>
             <LineChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 20 }}>
               <CartesianGrid stroke="rgba(255, 255, 255, 0.05)" strokeDasharray="3 3" />
               <XAxis
@@ -126,7 +118,7 @@ export default function Results() {
                 label={{ value: 'Round', position: 'insideBottom', offset: -12, fill: 'var(--text-secondary)', fontSize: 12 }}
               />
               <YAxis
-                domain={[0, 100]}
+                domain={[70, 100]}
                 stroke="var(--text-muted)"
                 tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
                 tickFormatter={(v) => `${v}%`}
@@ -144,7 +136,7 @@ export default function Results() {
               <Legend
                 verticalAlign="top"
                 height={36}
-                wrapperStyle={{ paddingBottom: '10px', fontSize: '13px' }}
+                wrapperStyle={{ paddingBottom: '10px', fontSize: '12px' }}
               />
               <Line
                 type="monotone"
@@ -156,27 +148,48 @@ export default function Results() {
               />
               <Line
                 type="monotone"
-                dataKey="Krum"
-                stroke="#f59e0b"
+                dataKey="Rule Baseline"
+                stroke="#00F0FF"
                 strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={{ fill: '#f59e0b', r: 3 }}
-                activeDot={{ r: 5 }}
+                dot={{ fill: '#00F0FF', r: 3 }}
               />
               <Line
                 type="monotone"
-                dataKey="FedAvg"
+                dataKey="Krum"
+                stroke="#f59e0b"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={{ fill: '#f59e0b', r: 3 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="Trimmed-Mean"
+                stroke="#a78bfa"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={{ fill: '#a78bfa', r: 3 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="FedAvg (Poisoned)"
                 stroke="#ef4444"
                 strokeWidth={2}
                 dot={{ fill: '#ef4444', r: 3 }}
-                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="Clean Reference"
+                stroke="#9ca3af"
+                strokeWidth={1.5}
+                strokeDasharray="3 3"
+                dot={false}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         {/* Right: Stacked Result Cards (flex: 1) */}
-        <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* ByzAgent */}
           <div className="result-card winner">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -185,9 +198,21 @@ export default function Results() {
                 <ShieldCheck size={14} /> Winner
               </span>
             </div>
-            <div className="stat-huge text-green">{formatPercent(byzagentAcc)}</div>
+            <div className="stat-huge text-green">{formatPercent(byz?.final_acc)}</div>
             <p className="subtitle" style={{ fontSize: '13px', marginTop: '6px' }}>
-              LLM quarantined attackers
+              LLM dynamically quarantined Sybil attackers
+            </p>
+          </div>
+
+          {/* Rule Baseline */}
+          <div className="result-card" style={{ borderColor: 'rgba(0, 240, 255, 0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontWeight: 600, fontSize: '15px' }}>Rule Baseline</span>
+              <span className="badge badge-cyan">Heuristic</span>
+            </div>
+            <div className="stat-huge text-accent">{formatPercent(rule?.final_acc)}</div>
+            <p className="subtitle" style={{ fontSize: '13px', marginTop: '6px' }}>
+              Static threshold defense
             </p>
           </div>
 
@@ -197,9 +222,9 @@ export default function Results() {
               <span style={{ fontWeight: 600, fontSize: '15px' }}>Krum</span>
               <span className="badge badge-orange">Failed</span>
             </div>
-            <div className="stat-huge text-orange">{formatPercent(krumAcc)}</div>
+            <div className="stat-huge text-orange">{formatPercent(krum?.final_acc)}</div>
             <p className="subtitle" style={{ fontSize: '13px', marginTop: '6px' }}>
-              Fooled by Sybil cluster
+              Fooled by Sybil majority cluster
             </p>
           </div>
 
@@ -209,9 +234,9 @@ export default function Results() {
               <span style={{ fontWeight: 600, fontSize: '15px' }}>FedAvg</span>
               <span className="badge badge-red">Compromised</span>
             </div>
-            <div className="stat-huge text-red">{formatPercent(fedavgAcc)}</div>
+            <div className="stat-huge text-red">{formatPercent(fedavg?.final_acc)}</div>
             <p className="subtitle" style={{ fontSize: '13px', marginTop: '6px' }}>
-              No defense mechanism
+              No Byzantine defense
             </p>
           </div>
         </div>
@@ -226,10 +251,10 @@ export default function Results() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
           <AlertTriangle size={24} color="var(--orange)" />
-          <h3 style={{ fontSize: '18px', fontWeight: 600 }}>Why Krum Fails</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 600 }}>Why Traditional Math Defenses Collapse</h3>
         </div>
         <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.7' }}>
-          Krum relies on geometric Euclidean distance, calculating score metrics based on proximity to nearest neighbors under the assumption of an honest majority. When malicious nodes coordinate a <strong style={{ color: 'var(--text)' }}>Sybil attack</strong> (controlling 2 of 3 participants), their poisoned updates cluster tightly together in parameter space. Krum misidentifies this artificial Sybil consensus as the honest cluster and selects an attacker update while discarding the single honest client as an outlier — leading to severe performance degradation down to <strong style={{ color: 'var(--orange)' }}>84.9%</strong>. In contrast, ByzAgent uses semantic behavioral analysis and historical context to accurately identify and quarantine attackers regardless of cluster size.
+          Classical Byzantine robust aggregators like Krum require an honest majority (<code style={{ color: 'var(--accent)' }}>n &gt; 2f + 2</code>). When malicious clients coordinate a <strong style={{ color: 'var(--text)' }}>Sybil attack</strong> (controlling 2 of 3 nodes), their poisoned updates form an artificial geometric cluster in weight space. Pure distance-based metrics mistake this dense Sybil cluster for consensus, selecting poisoned updates and discarding genuine honest contributions. In contrast, ByzAgent tracks temporal behavioral trajectories across rounds and reasons contextually to isolate stealthy poisoning.
         </p>
       </div>
     </section>

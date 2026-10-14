@@ -29,11 +29,16 @@ RANDOM_SEED = 42
 NUM_ROUNDS = 10
 NUM_CLIENTS = 3
 LOCAL_EPOCHS = 3
-AGG_STRATEGY = "byzagent" # 'fedavg', 'krum', 'trimmed_mean', or 'byzagent'
+AGG_STRATEGY = "byzagent" # 'fedavg', 'krum', 'trimmed_mean', 'rule', or 'byzagent'
 NON_IID_ALPHA = 0.5
-BATCH_SIZE = 128
+BATCH_SIZE = 512
 LEARNING_RATE = 0.001
 FEDPROX_MU = 0.01
+
+# Rule-based Baseline Thresholds
+RULE_VAL_ACC_THRESHOLD = 0.50
+RULE_LOSS_MEDIAN_FACTOR = 2.0
+RULE_COS_SIM_THRESHOLD = 0.50
 
 # ByzAgent Phase 0: Poisoning Simulation
 POISON_ENABLED = True

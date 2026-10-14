@@ -1,0 +1,202 @@
+[
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Low local loss (0.048) and high validation accuracy (0.987) indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "downweight",
+        "explanation": "Local loss (0.535) is much higher than client_0 despite similar accuracy, suggesting early divergence."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "downweight",
+        "explanation": "High loss (0.535) and lower validation accuracy (0.974) point to potential poisoning."
+      }
+    ],
+    "round": 1
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Low loss (0.0369), high cosine similarity (0.746) and stable validation accuracy (~0.986) indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "downweight",
+        "explanation": "Loss rose sharply to 0.864, cosine similarity fell to 0.801 and validation accuracy dropped to 0.981, showing early divergence."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "downweight",
+        "explanation": "Loss increased to 0.863 and cosine similarity dropped to 0.799 despite decent accuracy, suggesting possible early poisoning."
+      }
+    ],
+    "round": 2
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Norm and cosine similarity drop sharply while loss continues to fall, indicating early divergence."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Loss rises from 0.53 to 1.13, cosine similarity falls and validation accuracy drops, showing clear poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "downweight",
+        "explanation": "Norm and cosine similarity decrease and loss climbs despite stable accuracy, suggesting emerging anomaly."
+      }
+    ],
+    "round": 3
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "decreasing loss, rising val_accuracy and stable norms despite modest cos_sim drop indicate normal behavior"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "steady loss increase, val_accuracy drop to 0.94 and falling cos_sim suggest clear poisoning"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "loss rising, val_accuracy fell to 0.91 and cos_sim decreasing indicate strong divergence"
+      }
+    ],
+    "round": 4
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Cosine similarity fell sharply to 0.30 while loss improved, indicating early divergence."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "downweight",
+        "explanation": "Local loss rose to 1.54 and validation accuracy dropped to 0.94, showing signs of poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Loss increased to 1.54, validation accuracy fell to 0.85, and similarity rose, indicating clear poisoning."
+      }
+    ],
+    "round": 5
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Consistently high val_accuracy (~0.99) and low loss (~0.03) with no steady decline in cos_sim indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Sharp drop in val_accuracy to 0.85 and rising loss to 1.68 across rounds signal clear poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "downweight",
+        "explanation": "Gradual increase in loss (1.35\u21921.68) and slight val_accuracy decline suggest early divergence."
+      }
+    ],
+    "round": 6
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Low, stable loss (~0.026), high val_accuracy (~0.99) and consistent cosine similarity indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Rising loss (1.54\u21921.79), sharp val_accuracy drop to ~0.85 and persistently high loss suggest poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Increasing loss (1.54\u21921.78) and low val_accuracy (~0.85) across rounds indicate likely poisoned updates."
+      }
+    ],
+    "round": 7
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Low loss (~0.025), high val_accuracy (~0.99) and stable cosine similarity indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "downweight",
+        "explanation": "Rising local loss (1.68\u21921.85) despite stable val_accuracy suggests early poisoning, so reduce weight."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "downweight",
+        "explanation": "Consistent increase in loss (1.68\u21921.85) and growing update norm indicate potential divergence, warranting downweight."
+      }
+    ],
+    "round": 8
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Stable low loss (~0.025), high val_accuracy (~0.99) and slightly improving cosine similarity indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Val_accuracy dropped sharply to 0.02 with persistently high loss (~1.84) despite high cosine similarity, signaling poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Val_accuracy fell to 0.01 and loss stayed high (~1.84) while cosine similarity remains high, indicating a compromised client."
+      }
+    ],
+    "round": 9
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Stable low loss (~0.025), high val_accuracy (~0.99) and increasing cos_sim indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Val_accuracy fell from 0.85 to 0.0038 and loss remains high (~1.7), showing clear poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Val_accuracy dropped from 0.85 to 0.0082 with persistently high loss (~1.7), indicating malicious update."
+      }
+    ],
+    "round": 10
+  }
+]

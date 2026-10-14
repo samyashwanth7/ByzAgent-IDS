@@ -1,0 +1,202 @@
+[
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      }
+    ],
+    "round": 1
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      }
+    ],
+    "round": 2
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      }
+    ],
+    "round": 3
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      }
+    ],
+    "round": 4
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      }
+    ],
+    "round": 5
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      }
+    ],
+    "round": 6
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      }
+    ],
+    "round": 7
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      }
+    ],
+    "round": 8
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Rule: metrics within normal thresholds"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Rule: val_acc 0.05 < 0.5 or loss 1.83 > 3.67"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Rule: val_acc 0.02 < 0.5 or loss 1.83 > 3.67"
+      }
+    ],
+    "round": 9
+  },
+  {
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "downweight",
+        "explanation": "Rule: cos_sim 0.33 < 0.5"
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Rule: val_acc 0.01 < 0.5 or loss 1.69 > 3.38"
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Rule: val_acc 0.01 < 0.5 or loss 1.69 > 3.38"
+      }
+    ],
+    "round": 10
+  }
+]
