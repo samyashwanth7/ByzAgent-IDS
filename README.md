@@ -88,7 +88,7 @@ If you only read one file, read [src/agents/byz_agent.py](src/agents/byz_agent.p
 
 ## Authors
 
-Shaashwat Agrawal and team, VIT-AP University, 2026.
+Sampath Kumar and team, VIT-AP University, 2026.
 
 ---
 
