@@ -1,95 +1,303 @@
-# ByzAgent
+# ByzAgent-IDS: Agentic Byzantine Trust Diagnosis for Federated Intrusion Detection
 
-**Catching poisoned clients in federated learning by letting an LLM read their stats instead of trusting a formula.**
+<div align="center">
+
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![LangChain](https://img.shields.io/badge/LangChain-Enabled-green.svg?logo=langchain&logoColor=white)](https://www.langchain.com/)
+[![Groq LPU](https://img.shields.io/badge/Groq-LPU%20Cloud-f55036.svg)](https://groq.com/)
+[![Dataset](https://img.shields.io/badge/Dataset-CICIDS--2017-lightgrey.svg)](https://www.unb.ca/cic/datasets/ids-2017.html)
+[![Frontend](https://img.shields.io/badge/Dashboard-React%20%2B%20Vite-61DAFB.svg?logo=react&logoColor=black)](https://vitejs.dev/)
+
+**An LLM-as-a-Security-Arbiter that prevents Sybil poisoning in Federated Learning by diagnosing client telemetry instead of relying on broken geometric formulas.**
+
+[Overview](#-overview) • [The Problem: Why Krum Fails](#-the-problem-why-classical-defenses-fail) • [Architecture](#-architecture) • [Experimental Results](#-empirical-benchmark-results) • [Quickstart](#-quickstart--reproduction) • [Dashboard](#-interactive-dashboard)
+
+</div>
 
 ---
 
-## What this is
+## 📌 Overview
 
-ByzAgent is a federated intrusion detection system built on PyTorch + CICIDS-2017. Multiple organizations (simulated as 3 clients) train a shared MLP on their local network traffic without exchanging raw data. The catch: some of those clients are adversarial. They flip labels to sabotage the global model.
+Federated Learning (FL) allows distributed organizations (e.g., banks, hospitals, enterprise networks) to collaboratively train an Intrusion Detection System (IDS) without ever sharing their raw network traffic logs. 
 
-The standard defense against this kind of Byzantine attack is an algorithm called [Krum](https://proceedings.neurips.cc/paper/2017/hash/f4b9ec30ad9f68f89b29639786cb62ef-Abstract.html), which picks the client update closest to its neighbors. The problem we found (and proved empirically) is that when attackers outnumber honest clients, Krum selects the *wrong* side. Two poisoned clients form a tighter cluster than one clean one. Krum trusts the majority. Accuracy crashes to 84.9%.
+However, FL is acutely vulnerable to **Byzantine attacks**: compromised or malicious participants can upload poisoned model updates (such as label-flipping attacks) designed to corrupt the global detector.
 
-**ByzAgent replaces that formula with an LLM.** Each round, we extract four behavioral signals from every client (update norm, cosine similarity to peers, local training loss, validation accuracy on a held-out set) and pass them as structured JSON to a language model via LangChain + Groq. The model returns a decision per client: 	rust, downweight, or quarantine, along with a one-sentence explanation. No retraining of the LLM. No fine-tuning. Just a well-crafted prompt and structured output parsing.
+### The Core Question
+> *"What happens when attackers form a colluding majority ($f \ge n/2$)? Can an LLM reason over behavioral telemetry to catch poisoned clients that fool traditional algorithms?"*
 
-It works. 98.97% accuracy under the same 2-attacker scenario where Krum fails.
+**ByzAgent-IDS** replaces static geometric distance formulas with an **LLM Security Arbiter** powered by LangChain and Groq. Each training round, the server extracts multi-dimensional behavioral telemetry from each client (local loss, held-out server validation accuracy, peer cosine similarity, weight update norms) across a 3-round rolling history. ByzAgent inspects these temporal trends to output an auditable three-way decision: **`TRUST`**, **`DOWNWEIGHT`**, or **`QUARANTINE`** with a natural-language rationale.
 
-## Why this matters
+---
 
-Most Byzantine-resilient aggregation schemes assume the number of attackers is strictly less than half the pool. In practice that assumption breaks all the time (compromised IoT devices, Sybil nodes, colluding insiders). We needed something that doesn't depend on a static threshold. An LLM can look at *what the numbers mean* instead of just computing distances between weight vectors.
+## 💥 The Problem: Why Classical Defenses Fail
 
-There's a growing body of work on using LLMs as reasoning engines inside ML pipelines, but as far as we could find, nobody had plugged one into federated aggregation as a trust arbiter. That's the gap.
+Classical Byzantine-robust aggregators such as **Krum** (Blanchard et al., NeurIPS 2017) and **Coordinate-wise Trimmed-Mean** operate under a strict theoretical assumption: **honest clients must form a strict majority ($n > 2f + 2$)**.
 
-## Results
+```
+Scenario: 3 Clients (1 Honest Node, 2 Colluding Sybil Attackers)
 
-| Strategy | Accuracy | F1 | What happens |
-|---|---|---|---|
-| FedAvg (no defense) | 96.16% | 0.9567 | Poisoned weights drag it down |
-| Krum | 84.90% | 0.8402 | Trusts the attackers, rejects the clean client |
-| **ByzAgent** | **98.97%** | **0.9889** | Quarantines both attackers every round |
+                     [Attacker 1] (Poisoned)
+                          ▲
+             Distance d12 | Small Distance (Collusion Cluster)
+                          ▼
+                     [Attacker 2] (Poisoned)
+                     
+                     
+       Distance d01       ▲ Large Distance
+        (Far Away)        | (Clean Update)
+                          ▼
+                     [Client 0] (Honest)
+```
 
-10 rounds, 3 local epochs each, CICIDS-2017 (2.8M rows), 2 out of 3 clients performing sudden label-flip attacks with 60% flip rate.
+### The Sybil Collapse:
+1. **Attackers Collude:** Attackers 1 and 2 flip labels to poison the model. Because they execute the same objective, their weight vectors point in a similar direction ($d_{12}$ is very small).
+2. **Krum Computes Distances:** Krum calculates Euclidean distances between all pairs of client models and selects the single client closest to its nearest neighbors.
+3. **The Result:** The distance between the two attackers ($d_{12}$) is much smaller than the distance to the honest client ($d_{01}$). **Krum declares an attacker to be the most "representative" client and discards the honest update.**
+4. **Catastrophic Failure:** Global model accuracy plummets from **98.92% down to 1.77%**.
 
-## Project layout
+---
 
-`
-src/
-  model.py             # 3-layer MLP (78 -> 128 -> 64 -> 8)
-  dataset.py           # CICIDS-2017 loader + IID/non-IID partitioning
-  utils.py             # training loops, evaluation, DP clipping
-  attacks/
-    label_flip.py      # sudden + gradual label-flipping simulator
-  monitoring/
-    client_stats.py    # per-round stat extraction (norm, cosine, loss, val_acc)
-  aggregation/
-    robust_baselines.py  # Krum + Trimmed-Mean implementations
-  agents/
-    byz_agent.py       # the LLM trust arbiter (LangChain + Groq)
-experiments/
-  run_federated.py     # main training loop with poisoning + ByzAgent
-  run_centralized.py   # single-model baseline
-  run_explainability.py  # SHAP analysis
-backend/
-  api.py               # FastAPI server for the dashboard
-dashboard/             # React + Recharts frontend
-`
+## 🛡️ The ByzAgent Solution
 
-## Running it
+Instead of assuming distance equals honesty, ByzAgent evaluates **behavioral cause-and-effect** across time:
 
-`ash
-# install
+```mermaid
+flowchart TD
+    subgraph Clients["Federated Fleet (CICIDS-2017)"]
+        C0["Client 0: Honest Bank Node"]
+        C1["Client 1: Malicious Node (Label-Flipping)"]
+        C2["Client 2: Malicious Node (Label-Flipping)"]
+    end
+
+    subgraph Server["Central Aggregation Server"]
+        M0["Local Model 0"]
+        M1["Local Model 1"]
+        M2["Local Model 2"]
+        
+        TEL["Telemetry Extractor (src/monitoring/client_stats.py)<br/>• Local Loss Slope<br/>• Server Val Accuracy (Held-out 10%)<br/>• Peer Cosine Similarity<br/>• Weight Update L2 Norm"]
+        
+        LLM["ByzAgent Security Arbiter (src/agents/byz_agent.py)<br/>Groq LPU + LangChain + 3-Round Rolling History"]
+        
+        AGG["Adaptive Weighted FedAvg<br/>• Trust: 1.0x Weight<br/>• Downweight: 0.3x Weight<br/>• Quarantine: 0.0x (Excluded)"]
+        
+        GM["Updated Global IDS Model"]
+    end
+
+    C0 --> M0
+    C1 --> M1
+    C2 --> M2
+    
+    M0 & M1 & M2 --> TEL
+    TEL --> LLM
+    LLM -->|Decisions + Explanations| AGG
+    M0 & M1 & M2 --> AGG
+    AGG --> GM
+    GM -->|Next Round Broadcast| C0 & C1 & C2
+```
+
+### Telemetry Signals Evaluated by ByzAgent:
+1. **Held-out Server Validation Accuracy:** Evaluated on a clean server-side split (10% slice of CICIDS-2017, completely isolated from test data). Poisoned models show sharp drops here.
+2. **Local Training Loss:** Poisoned clients trying to learn contradictory flipped labels show sustained or rising training loss.
+3. **Peer Cosine Similarity:** Quantifies alignment with the fleet consensus vector.
+4. **Weight Update Norm ($L_2$):** Detects gradient scaling anomalies.
+5. **Rolling History Trajectory:** Slices the last 3 rounds so the LLM evaluates slopes (gradual degradation) rather than static point-in-time noise.
+
+---
+
+## 📊 Empirical Benchmark Results
+
+All experiments were executed on the full **CICIDS-2017** benchmark (1,786,531 training flows, 446,633 test flows, 8 balanced traffic classes) under identical conditions: **3 clients, 2 colluding gradual label-flipping attackers, 10 federated rounds**.
+
+### Benchmark Summary Table
+
+| Defense Strategy | Attack Status | Final Accuracy | Macro-F1 | Attacker Detections (TP) | False Alarms (FP) | Final Verdict |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **FedAvg (Clean Reference)** | No Attack | **98.92%** | **0.9882** | — | — | Theoretical upper bound. |
+| **FedAvg (Poisoned)** | Gradual Flip | **1.18%** | **0.0156** | 0 | 0 | **Total collapse**: Attacker weights poison the network. |
+| **Krum (Poisoned)** | Gradual Flip | **1.77%** | **0.0296** | 0 | 0 | **Total collapse**: Tricked by Sybil cluster every round. |
+| **Trimmed-Mean (Poisoned)** | Gradual Flip | **0.64%** | **0.0051** | 0 | 0 | **Total collapse**: Malicious coordinates dominate median. |
+| **Rule-Based Baseline** | Gradual Flip | **99.33%** | **0.9926** | 4 / 20 | 1 | **Delayed**: Only caught attacks at round 9–10 after full collapse. |
+| **ByzAgent (Ours)** | Gradual Flip | **99.04%** | **0.9897** | **20 / 20** | **2** | **Full Defense**: Caught attackers in early rounds via temporal reasoning. |
+
+---
+
+### Visual Comparison
+
+#### 1. Convergence & Defense Comparison
+Krum, Trimmed-Mean, and standard FedAvg collapse to near 0% as poisoning escalates. ByzAgent maintains stability on par with the unpoisoned reference:
+
+<div align="center">
+  <img src="docs/images/benchmark_comparison.png" alt="Benchmark Accuracy and Loss Comparison" width="900px" />
+</div>
+
+#### 2. Client Telemetry Trajectory (The LLM's View)
+Notice how Client 0 (green) maintains high validation accuracy and low loss, whereas Attackers 1 & 2 (red) exhibit escalating loss and plunging validation accuracy:
+
+<div align="center">
+  <img src="docs/images/client_telemetry_curves.png" alt="Client Telemetry Curves" width="900px" />
+</div>
+
+#### 3. 8-Class Multi-Class Confusion Matrix (ByzAgent Protected Model)
+Evaluated on 401,970 held-out test flows across all 8 intrusion categories:
+
+<div align="center">
+  <img src="docs/images/confusion_matrix.png" alt="ByzAgent Confusion Matrix" width="600px" />
+</div>
+
+---
+
+## 🧠 Sample ByzAgent Reasoning Log
+
+Here are actual decisions generated by the LLM during training rounds:
+
+```json
+[
+  {
+    "round": 4,
+    "decisions": [
+      {
+        "client_id": "client_0",
+        "decision": "trust",
+        "explanation": "Decreasing loss, rising val_accuracy and stable norms despite modest cos_sim drop indicate normal behavior."
+      },
+      {
+        "client_id": "client_1",
+        "decision": "quarantine",
+        "explanation": "Steady loss increase, val_accuracy drop to 0.94 and falling cos_sim suggest clear poisoning."
+      },
+      {
+        "client_id": "client_2",
+        "decision": "quarantine",
+        "explanation": "Loss rising, val_accuracy fell to 0.91 and cos_sim decreasing indicate strong divergence."
+      }
+    ]
+  }
+]
+```
+
+---
+
+## 💻 Interactive Dashboard
+
+The repository includes a modern React + Vite dashboard with interactive Recharts visualizations:
+* **Live Demo:** Real-time replay of packet classification from held-out test traffic.
+* **Agent Reasoning Log:** Audit trail of ByzAgent's natural-language rationales per round.
+* **Telemetry Inspector:** Interactive charts of client loss, cosine similarity, and validation accuracy.
+* **Analytics:** 8x8 Confusion Matrix heatmap and per-class precision/recall metrics.
+
+> **Tip for Deployment:** The frontend reads static pre-compiled experiment results from `dashboard/public/data/` and can be deployed directly to **Vercel** with zero backend infrastructure needed.
+
+---
+
+## 🚀 Quickstart & Reproduction
+
+### 1. Prerequisites
+* Python 3.10 or higher
+* Node.js 18+ (for dashboard)
+* Free Groq API Key (get one at [console.groq.com](https://console.groq.com/))
+
+### 2. Environment Setup
+```bash
+# Clone the repository
+git clone https://github.com/samyashwanth7/ByzAgent-IDS.git
+cd ByzAgent-IDS
+
+# Install Python dependencies
 pip install -r requirements.txt
 
-# preprocess the dataset (expects CICIDS-2017 CSVs in data/raw/)
+# Create your .env file
+echo GROQ_API_KEY=your_groq_api_key_here > .env
+```
+
+### 3. Dataset Preprocessing
+Ensure the CICIDS-2017 CSV files are in `data/raw/` or run the automated preprocessor:
+```bash
 python src/dataset.py
+```
+*(Caches preprocessed features to `data/processed/cicids2017_multiclass.pkl`)*
 
-# run the federated experiment with ByzAgent
-# edit config.py to set AGG_STRATEGY, ATTACKER_CLIENTS, POISON_MODE
-python experiments/run_federated.py
+### 4. Run the Full Experiment Benchmark
+To execute the complete benchmark suite (FedAvg, Krum, Trimmed-Mean, Rule, ByzAgent):
+```bash
+python experiments/run_all.py
+```
+Or run individual strategies:
+```bash
+# Run ByzAgent defense
+python experiments/run_federated.py --strategy byzagent
 
-# start the dashboard
-cd backend && uvicorn api:app --reload &
-cd dashboard && npm run dev
-`
+# Run Krum baseline
+python experiments/run_federated.py --strategy krum
 
-You need a .env file with GROQ_API_KEY=your_key for the LLM calls. Free tier works fine.
+# Run Rule baseline
+python experiments/run_federated.py --strategy rule
+```
 
-## The interesting file
-
-If you only read one file, read [src/agents/byz_agent.py](src/agents/byz_agent.py). It's ~80 lines. The prompt engineering is where the actual research contribution lives: telling the LLM what each metric means, what combinations signal poisoning, and forcing structured JSON output so we can parse the decisions programmatically.
-
-## Built with
-
-- PyTorch (model + federated training loop, no Flower/PySyft dependency)
-- LangChain + Groq (LLM integration)
-- SHAP (prediction explainability)
-- FastAPI + React + Recharts (monitoring dashboard)
-- CICIDS-2017 dataset
-
-## Authors
-
-Sampath Kumar and team, VIT-AP University, 2026.
+### 5. Launch the Dashboard
+```bash
+cd dashboard
+npm install
+npm run dev
+```
+Open your browser at `http://localhost:5173`.
 
 ---
 
-*This started as a plain federated IDS project. The ByzAgent layer came from asking: what if the server could actually understand why a client looks wrong, instead of just measuring how far away it is?*
+## 📂 Repository Structure
+
+```
+XFed-IDS/
+├── config.py                 # Central experiment parameters & thresholds
+├── src/
+│   ├── model.py              # PyTorch MLP Intrusion Detection Architecture
+│   ├── dataset.py            # CICIDS-2017 multi-class parser & split generator
+│   ├── utils.py              # Training loops, evaluation, device handlers
+│   ├── attacks/
+│   │   └── label_flip.py     # Sudden & gradual label-flipping poison simulator
+│   ├── monitoring/
+│   │   └── client_stats.py   # Client telemetry extractor (norms, cos_sim, loss)
+│   ├── aggregation/
+│   │   └── robust_baselines.py # Krum and Trimmed-Mean aggregators
+│   └── agents/
+│       └── byz_agent.py      # LLM Security Arbiter (LangChain + Groq)
+├── experiments/
+│   ├── run_federated.py      # Main federated training loop
+│   └── run_all.py            # Automated benchmark runner suite
+├── scripts/
+│   ├── export_frontend_data.py   # Compiles experiment outputs to frontend JSON
+│   └── generate_readme_figures.py # Plots publication figures for documentation
+├── dashboard/                # React + Vite + Tailwind + Recharts Web UI
+│   ├── public/data/          # Real experimental JSON datasets
+│   └── src/                  # React dashboard components
+└── results/                  # Real experimental metric JSONs & model weights
+```
+
+---
+
+## 🎓 Viva & Interview Defense Q&A
+
+<details>
+<summary><b>Q1: Why use an LLM instead of standard statistical outlier detection?</b></summary>
+<br>
+Geometric outlier detectors (Krum, Trimmed-Mean, Bulyan) assume distance from the mean correlates with malice. When attackers form a majority ($f \ge n/2$), the statistical "outlier" is actually the honest node. ByzAgent inspects semantic relationships—evaluating local loss relative to validation accuracy on a clean server set across multiple rounds—which reveals contradictory learning regardless of fleet proportions.
+</details>
+
+<details>
+<summary><b>Q2: Does ByzAgent require expensive GPU infrastructure to run?</b></summary>
+<br>
+No. ByzAgent executes only <b>one prompt per round</b> (batching all clients into a single JSON schema). By utilizing Groq's cloud LPU, inference latency is under 1.5 seconds per round at virtually zero cost.
+</details>
+
+<details>
+<summary><b>Q3: What prevents data leakage in the validation set?</b></summary>
+<br>
+We strictly isolate a 10% server validation slice (44,663 flows) evaluated only by the arbiter, completely separate from the 401,970 test flows used exclusively for final global model metrics.
+</details>
+
+---
+
+## 👥 Authors & Acknowledgments
+
+* **Sampath Kumar & Team** — VIT-AP University, 2026.
+* Built as a Capstone Project in Federated Learning & LLM-Driven Security Automation.
