@@ -34,21 +34,9 @@ However, FL is acutely vulnerable to **Byzantine attacks**: compromised or malic
 
 Classical Byzantine-robust aggregators such as **Krum** (Blanchard et al., NeurIPS 2017) and **Coordinate-wise Trimmed-Mean** operate under a strict theoretical assumption: **honest clients must form a strict majority ($n > 2f + 2$)**.
 
-```
-Scenario: 3 Clients (1 Honest Node, 2 Colluding Sybil Attackers)
-
-                     [Attacker 1] (Poisoned)
-                          ▲
-             Distance d12 | Small Distance (Collusion Cluster)
-                          ▼
-                     [Attacker 2] (Poisoned)
-                     
-                     
-       Distance d01       ▲ Large Distance
-        (Far Away)        | (Clean Update)
-                          ▼
-                     [Client 0] (Honest)
-```
+<div align="center">
+  <img src="docs/images/krum_sybil_collapse.png" alt="Why Krum Fails Under Sybil Attack" width="900px" />
+</div>
 
 ### The Sybil Collapse:
 1. **Attackers Collude:** Attackers 1 and 2 flip labels to poison the model. Because they execute the same objective, their weight vectors point in a similar direction ($d_{12}$ is very small).
@@ -62,39 +50,9 @@ Scenario: 3 Clients (1 Honest Node, 2 Colluding Sybil Attackers)
 
 Instead of assuming distance equals honesty, ByzAgent evaluates **behavioral cause-and-effect** across time:
 
-```mermaid
-flowchart TD
-    subgraph Clients["Federated Fleet (CICIDS-2017)"]
-        C0["Client 0: Honest Bank Node"]
-        C1["Client 1: Malicious Node (Label-Flipping)"]
-        C2["Client 2: Malicious Node (Label-Flipping)"]
-    end
-
-    subgraph Server["Central Aggregation Server"]
-        M0["Local Model 0"]
-        M1["Local Model 1"]
-        M2["Local Model 2"]
-        
-        TEL["Telemetry Extractor (src/monitoring/client_stats.py)<br/>• Local Loss Slope<br/>• Server Val Accuracy (Held-out 10%)<br/>• Peer Cosine Similarity<br/>• Weight Update L2 Norm"]
-        
-        LLM["ByzAgent Security Arbiter (src/agents/byz_agent.py)<br/>Groq LPU + LangChain + 3-Round Rolling History"]
-        
-        AGG["Adaptive Weighted FedAvg<br/>• Trust: 1.0x Weight<br/>• Downweight: 0.3x Weight<br/>• Quarantine: 0.0x (Excluded)"]
-        
-        GM["Updated Global IDS Model"]
-    end
-
-    C0 --> M0
-    C1 --> M1
-    C2 --> M2
-    
-    M0 & M1 & M2 --> TEL
-    TEL --> LLM
-    LLM -->|Decisions + Explanations| AGG
-    M0 & M1 & M2 --> AGG
-    AGG --> GM
-    GM -->|Next Round Broadcast| C0 & C1 & C2
-```
+<div align="center">
+  <img src="docs/images/architecture_diagram.png" alt="ByzAgent-IDS Architecture Diagram" width="950px" />
+</div>
 
 ### Telemetry Signals Evaluated by ByzAgent:
 1. **Held-out Server Validation Accuracy:** Evaluated on a clean server-side split (10% slice of CICIDS-2017, completely isolated from test data). Poisoned models show sharp drops here.
