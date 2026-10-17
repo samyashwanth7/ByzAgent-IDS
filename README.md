@@ -15,6 +15,10 @@
 
 </div>
 
+<div align="center">
+  <img src="docs/images/dashboard_preview.png" alt="ByzAgent-IDS Interactive Dashboard Preview" width="900px" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);" />
+</div>
+
 ---
 
 ## 📌 Overview
@@ -26,7 +30,7 @@ However, FL is acutely vulnerable to **Byzantine attacks**: compromised or malic
 ### The Core Question
 > *"What happens when attackers form a colluding majority ($f \ge n/2$)? Can an LLM reason over behavioral telemetry to catch poisoned clients that fool traditional algorithms?"*
 
-**ByzAgent-IDS** replaces static geometric distance formulas with an **LLM Security Arbiter** powered by LangChain and Groq. Each training round, the server extracts multi-dimensional behavioral telemetry from each client (local loss, held-out server validation accuracy, peer cosine similarity, weight update norms) across a 3-round rolling history. ByzAgent inspects these temporal trends to output an auditable three-way decision: **`TRUST`**, **`DOWNWEIGHT`**, or **`QUARANTINE`** with a natural-language rationale.
+**ByzAgent-IDS** replaces static geometric distance formulas with an **LLM Security Arbiter** powered by LangChain and Groq. Each training round, the server extracts 5-dimensional behavioral telemetry from each client (local training loss, held-out server validation accuracy, peer consensus cosine similarity, weight update norm, and multi-round rolling history trajectory). ByzAgent inspects these temporal trends to output an auditable three-way decision: **`TRUST`**, **`DOWNWEIGHT`**, or **`QUARANTINE`** with a natural-language rationale.
 
 ---
 
@@ -54,12 +58,12 @@ Instead of assuming distance equals honesty, ByzAgent evaluates **behavioral cau
   <img src="docs/images/architecture_diagram.png" alt="ByzAgent-IDS Architecture Diagram" width="950px" />
 </div>
 
-### Telemetry Signals Evaluated by ByzAgent:
+### Telemetry Signals Evaluated by ByzAgent (5 Behavioral Dimensions):
 1. **Held-out Server Validation Accuracy:** Evaluated on a clean server-side split (10% slice of CICIDS-2017, completely isolated from test data). Poisoned models show sharp drops here.
 2. **Local Training Loss:** Poisoned clients trying to learn contradictory flipped labels show sustained or rising training loss.
-3. **Peer Cosine Similarity:** Quantifies alignment with the fleet consensus vector.
-4. **Weight Update Norm ($L_2$):** Detects gradient scaling anomalies.
-5. **Rolling History Trajectory:** Slices the last 3 rounds so the LLM evaluates slopes (gradual degradation) rather than static point-in-time noise.
+3. **Peer Consensus Cosine Similarity:** Quantifies angular alignment with the fleet average / unweighted global consensus direction.
+4. **Weight Update Norm ($L_2$):** Detects gradient scaling or suppression anomalies.
+5. **Rolling History Trajectory:** Slices the last 3 rounds so the LLM evaluates slopes and velocity (gradual degradation) rather than static point-in-time noise.
 
 ---
 

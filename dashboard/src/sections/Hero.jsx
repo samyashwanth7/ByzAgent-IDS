@@ -8,8 +8,8 @@ export default function Hero() {
     fetch('/data/comparison.json')
       .then(res => res.json())
       .then(data => {
-        const byz = data.byzagent_gradual?.final_acc != null ? (data.byzagent_gradual.final_acc * 100).toFixed(2) + '%' : '99.31%';
-        const krum = data.krum_gradual?.final_acc != null ? (data.krum_gradual.final_acc * 100).toFixed(1) + '%' : '84.9%';
+        const byz = data.byzagent_gradual?.final_acc != null ? (data.byzagent_gradual.final_acc * 100).toFixed(2) + '%' : '99.04%';
+        const krum = data.krum_gradual?.final_acc != null ? (data.krum_gradual.final_acc * 100).toFixed(2) + '%' : '1.77%';
         setStats({ byzagentAcc: byz, krumAcc: krum });
       })
       .catch(() => {});

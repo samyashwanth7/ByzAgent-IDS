@@ -45,7 +45,7 @@
 
 ### **Week 6**
 * **Tasks Completed:**  
-  Benchmarked Krum and Trimmed-Mean; mathematically proved and observed that Krum collapses (drops to 84.9%) under Sybil majority attacks (2 of 3 malicious clients).
+  Benchmarked Krum and Trimmed-Mean; mathematically proved and observed that Krum collapses (drops to 1.77%, and FedAvg collapses to 1.18%) under Sybil majority attacks (2 of 3 malicious clients).
 * **Tasks Planned Next Week:**  
   Pivot project scope from static FL to ByzAgent: research LLM-in-the-loop agentic trust diagnosis on the central server.
 
@@ -55,7 +55,7 @@
 * **Tasks Completed:**  
   Finalized pivot to ByzAgent-IDS; designed system architecture where an LLM agent acts as an autonomous trust arbiter during aggregation.
 * **Tasks Planned Next Week:**  
-  Instrument client behavioral telemetry extraction (update norm, peer cosine similarity, loss, validation accuracy).
+  Instrument client behavioral telemetry extraction (update norm, peer consensus cosine similarity, loss, validation accuracy, rolling history).
 
 ---
 
@@ -77,7 +77,7 @@
 
 ### **Week 10**
 * **Tasks Completed:**  
-  Completed comparative experiments; ByzAgent maintained 99.31% accuracy and successfully quarantined Sybil attackers where Krum failed.
+  Completed comparative experiments; ByzAgent maintained 99.04% accuracy (0.9897 Macro-F1) and successfully quarantined Sybil attackers where Krum failed.
 * **Tasks Planned Next Week:**  
   Build full-stack web showcase and dashboard to present system architecture, live packet classification, and agent reasoning.
 
