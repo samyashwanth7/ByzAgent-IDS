@@ -8,3 +8,6 @@ shap>=0.42
 fastapi>=0.100
 uvicorn>=0.23
 pydantic>=2.0
+langchain-groq>=0.1
+langchain-core>=0.2
+python-dotenv>=1.0

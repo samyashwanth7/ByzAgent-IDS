@@ -1,4 +1,4 @@
-"""XFed-IDS Neural Network Model"""
+"""ByzAgent-IDS Neural Network Model"""
 import torch
 import torch.nn as nn
 

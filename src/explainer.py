@@ -1,4 +1,4 @@
-"""XFed-IDS SHAP Explainability Module"""
+"""ByzAgent-IDS SHAP Explainability Module"""
 import numpy as np
 import torch
 import shap
@@ -50,7 +50,7 @@ class IDSExplainer:
         plt.figure(figsize=(12, 8))
         sv = _extract_attack_class(shap_values)
         shap.summary_plot(sv, X, feature_names=self.feature_names, show=False, max_display=15)
-        plt.title('XFed-IDS: Feature Importance (SHAP)', fontsize=14)
+        plt.title('ByzAgent-IDS: Feature Importance (SHAP)', fontsize=14)
         plt.tight_layout()
         if save_path:
             plt.savefig(save_path, dpi=150, bbox_inches='tight')
@@ -69,7 +69,7 @@ class IDSExplainer:
         plt.barh(range(len(top_features)), top_values[::-1], color=colors)
         plt.yticks(range(len(top_features)), top_features[::-1])
         plt.xlabel('Mean |SHAP Value|')
-        plt.title('XFed-IDS: Top 15 Features for Attack Detection')
+        plt.title('ByzAgent-IDS: Top 15 Features for Attack Detection')
         plt.tight_layout()
         if save_path:
             plt.savefig(save_path, dpi=150, bbox_inches='tight')

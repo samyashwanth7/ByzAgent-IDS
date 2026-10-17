@@ -205,7 +205,7 @@ Open your browser at `http://localhost:5173`.
 ## 📂 Repository Structure
 
 ```
-XFed-IDS/
+ByzAgent-IDS/
 ├── config.py                 # Central experiment parameters & thresholds
 ├── src/
 │   ├── model.py              # PyTorch MLP Intrusion Detection Architecture

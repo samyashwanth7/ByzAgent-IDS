@@ -1,1 +1,1 @@
-"""XFed-IDS Source Package"""
+"""ByzAgent-IDS Source Package"""

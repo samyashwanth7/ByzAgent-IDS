@@ -19,11 +19,11 @@ HIDDEN_DIM_1 = 128
 HIDDEN_DIM_2 = 64
 DROPOUT_RATE = 0.3
 
-# Training
-BATCH_SIZE = 128
+# Training Hyperparameters
+RANDOM_SEED = 42
+BATCH_SIZE = 512
 LEARNING_RATE = 0.001
 NUM_EPOCHS = 20
-RANDOM_SEED = 42
 
 # Federated Learning
 NUM_ROUNDS = 10
@@ -31,8 +31,6 @@ NUM_CLIENTS = 3
 LOCAL_EPOCHS = 3
 AGG_STRATEGY = "byzagent" # 'fedavg', 'krum', 'trimmed_mean', 'rule', or 'byzagent'
 NON_IID_ALPHA = 0.5
-BATCH_SIZE = 512
-LEARNING_RATE = 0.001
 FEDPROX_MU = 0.01
 
 # Rule-based Baseline Thresholds

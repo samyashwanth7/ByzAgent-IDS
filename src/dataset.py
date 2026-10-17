@@ -1,4 +1,4 @@
-"""XFed-IDS Dataset Loading and Preprocessing"""
+"""ByzAgent-IDS Dataset Loading and Preprocessing"""
 import pandas as pd
 import numpy as np
 import pickle

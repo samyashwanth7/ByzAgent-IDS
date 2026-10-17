@@ -1,4 +1,4 @@
-"""XFed-IDS Utility Functions"""
+"""ByzAgent-IDS Utility Functions"""
 import torch
 import torch.nn as nn
 import numpy as np
