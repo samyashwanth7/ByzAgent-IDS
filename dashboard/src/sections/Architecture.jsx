@@ -84,7 +84,7 @@ export default function Architecture() {
             <div className="arch-node output">
               <Network size={28} color="var(--green)" style={{ marginBottom: '10px' }} />
               <h4 style={{ color: 'var(--green)' }}>Robust Global Model</h4>
-              <p>Only trusted updates aggregated — achieves 99.31% accuracy under attack</p>
+              <p>Only trusted updates aggregated — achieves 99.04% accuracy under attack</p>
             </div>
           </div>
         </div>

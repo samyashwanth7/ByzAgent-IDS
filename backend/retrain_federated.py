@@ -1,4 +1,4 @@
-"""XFed-IDS: Federated Retraining with Continual Learning
+"""ByzAgent-IDS: Federated Retraining with Continual Learning
 
 Loads the current global model, merges analyst-confirmed feedback samples
 into the CICIDS-2017 training set, re-partitions via Non-IID Dirichlet,
@@ -109,7 +109,7 @@ def retrain():
     device = get_device()
 
     print("=" * 65)
-    print("  XFed-IDS: Federated Retraining (Continual Learning)")
+    print("  ByzAgent-IDS: Federated Retraining (Continual Learning)")
     print("=" * 65)
 
     # ------------------------------------------------------------------

@@ -400,7 +400,7 @@ def run_federated_experiment(non_iid=False, strategy_name=None, alpha=NON_IID_AL
     return global_model, final_result
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='XFed-IDS Federated Training')
+    parser = argparse.ArgumentParser(description='ByzAgent-IDS Federated Training')
     parser.add_argument('--non-iid', action='store_true', help='Use non-IID partitioning')
     parser.add_argument('--strategy', choices=['fedavg', 'krum', 'trimmed_mean', 'rule', 'byzagent'], default=None)
     parser.add_argument('--alpha', type=float, default=NON_IID_ALPHA)

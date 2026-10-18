@@ -22,7 +22,7 @@ from src.model import IDSModel
 from src.dataset import load_cicids2017
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
 
-app = FastAPI(title="XFed-IDS Backend API")
+app = FastAPI(title="ByzAgent-IDS Backend API")
 
 app.add_middleware(
     CORSMiddleware,

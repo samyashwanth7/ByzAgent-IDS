@@ -69,7 +69,7 @@ Instead of assuming distance equals honesty, ByzAgent evaluates **behavioral cau
 
 ## 📊 Empirical Benchmark Results
 
-All experiments were executed on the full **CICIDS-2017** benchmark (1,786,531 training flows, 446,633 test flows, 8 balanced traffic classes) under identical conditions: **3 clients, 2 colluding gradual label-flipping attackers, 10 federated rounds**.
+All experiments were executed on the full **CICIDS-2017** benchmark (1,786,531 training flows, 446,633 held-out flows [401,970 test + 44,663 server validation], 8 balanced traffic classes) under identical conditions: **3 clients, 2 colluding gradual label-flipping attackers, 10 federated rounds**.
 
 ### Benchmark Summary Table
 

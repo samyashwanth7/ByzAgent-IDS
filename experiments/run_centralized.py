@@ -1,4 +1,4 @@
-"""XFed-IDS: Experiment 1 -- Centralized Baseline"""
+"""ByzAgent-IDS: Experiment 1 -- Centralized Baseline"""
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -16,7 +16,7 @@ def run_centralized_experiment():
     set_seed(RANDOM_SEED)
     device = get_device()
     print('=' * 60)
-    print('  XFed-IDS: Centralized Baseline Experiment')
+    print('  ByzAgent-IDS: Centralized Baseline Experiment')
     print('  (Upper bound -- all data shared, no privacy)')
     print('=' * 60)
     print('\n[DATA] Loading dataset...')

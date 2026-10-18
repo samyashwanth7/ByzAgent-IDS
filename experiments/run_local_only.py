@@ -1,4 +1,4 @@
-"""XFed-IDS: Experiment 3 -- Local-Only Baseline"""
+"""ByzAgent-IDS: Experiment 3 -- Local-Only Baseline"""
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -16,7 +16,7 @@ def run_local_only():
     set_seed(RANDOM_SEED)
     device = get_device()
     print('=' * 60)
-    print('  XFed-IDS: Local-Only Baseline Experiment')
+    print('  ByzAgent-IDS: Local-Only Baseline Experiment')
     print('  (Each org trains alone -- no collaboration)')
     print('=' * 60)
     print('\nLoading dataset...')

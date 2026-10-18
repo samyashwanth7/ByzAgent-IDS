@@ -54,7 +54,7 @@ To ensure the underlying MLP remains interpretable to human analysts, we apply S
 ## 3. Experimental Setup & Results
 
 ### 3.1 Experiment Design
-We simulate an adversarial environment using the CICIDS-2017 benchmark (1,786,531 training flows, 446,633 test flows, 8 balanced traffic classes). The federation consists of 3 clients with a **Sybil Attack**: 2 out of the 3 clients are adversarial, executing a gradual label-flipping attack over 10 federated rounds (+10% poisoned labels per round).
+We simulate an adversarial environment using the CICIDS-2017 benchmark (1,786,531 training flows, 446,633 held-out flows [401,970 test + 44,663 server validation], 8 balanced traffic classes). The federation consists of 3 clients with a **Sybil Attack**: 2 out of the 3 clients are adversarial, executing a gradual label-flipping attack over 10 federated rounds (+10% poisoned labels per round).
 
 ### 3.2 Results
 

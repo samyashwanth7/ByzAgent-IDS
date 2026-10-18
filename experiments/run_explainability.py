@@ -1,4 +1,4 @@
-"""XFed-IDS: Experiment 4 -- SHAP Explainability"""
+"""ByzAgent-IDS: Experiment 4 -- SHAP Explainability"""
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -14,7 +14,7 @@ from src.utils import set_seed
 def run_explainability():
     set_seed(RANDOM_SEED)
     print('=' * 60)
-    print('  XFed-IDS: SHAP Explainability Analysis')
+    print('  ByzAgent-IDS: SHAP Explainability Analysis')
     print('=' * 60)
     print('\nLoading data...')
     X_train, X_test, y_train, y_test, feature_names, label_names = load_cicids2017()
