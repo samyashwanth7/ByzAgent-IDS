@@ -11,7 +11,7 @@
 
 **An LLM-as-a-Security-Arbiter that prevents Sybil poisoning in Federated Learning by diagnosing client telemetry instead of relying on broken geometric formulas.**
 
-[Overview](#-overview) • [The Problem: Why Krum Fails](#-the-problem-why-classical-defenses-fail) • [Architecture](#-architecture) • [Experimental Results](#-empirical-benchmark-results) • [Quickstart](#-quickstart--reproduction) • [Dashboard](#-interactive-dashboard)
+[Overview](#-overview) • [The Problem: Why Krum Fails](#-the-problem-why-classical-defenses-fail) • [Architecture](#-architecture) • [Experimental Results](#-empirical-benchmark-results) • [Quickstart](#-quickstart--reproduction) • [Dashboard](#-interactive-dashboard) • [Interview & Viva Guide](INTERVIEW_DEFENSE_GUIDE.md)
 
 </div>
 
@@ -211,6 +211,7 @@ Open your browser at `http://localhost:5173`.
 ```
 ByzAgent-IDS/
 ├── config.py                 # Central experiment parameters & thresholds
+├── INTERVIEW_DEFENSE_GUIDE.md # Master Viva, Panel Defense & Interview Guide
 ├── src/
 │   ├── model.py              # PyTorch MLP Intrusion Detection Architecture
 │   ├── dataset.py            # CICIDS-2017 multi-class parser & split generator
@@ -238,6 +239,8 @@ ByzAgent-IDS/
 ---
 
 ## 🎓 Viva & Interview Defense Q&A
+
+> 💡 **Master Defense Guide:** For the comprehensive 20-question viva bible (including non-technical analogies, Krum mathematical proofs, Groq LPU economics, and panel trap rebuttals), read [**INTERVIEW_DEFENSE_GUIDE.md**](INTERVIEW_DEFENSE_GUIDE.md).
 
 <details>
 <summary><b>Q1: Why use an LLM instead of standard statistical outlier detection?</b></summary>
